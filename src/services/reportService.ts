@@ -1,0 +1,68 @@
+import api from "./api";
+
+export interface ReportHead {
+  id: number;
+  code: string;
+  description: string;
+}
+
+export interface MonthlyReportRow {
+  date: string;
+  receipts: Record<string, string>;
+  payments: Record<string, string>;
+  receipt: string;
+  payment: string;
+  business: string;
+}
+
+export interface MonthlyReport {
+  year: number;
+  month: number;
+  institution_id: number | null;
+  receipt_heads: ReportHead[];
+  payment_heads: ReportHead[];
+  rows: MonthlyReportRow[];
+  receipt_head_totals: Record<string, string>;
+  payment_head_totals: Record<string, string>;
+  total_receipt: string;
+  total_payment: string;
+  total_business: string;
+}
+
+export interface DashboardData {
+  role: string;
+  institution: { id: number; name: string };
+  today: { receipt: string; payment: string; business: string };
+  month: { receipt: string; payment: string; business: string };
+  daily_series: Array<{ date: string; label?: string; receipt: number; payment: number; business: number }>;
+  monthly_series?: Array<{
+    label: string;
+    year: number;
+    month: number;
+    receipt: number;
+    payment: number;
+    business: number;
+  }>;
+  institutions_total?: number;
+  institutions_active?: number;
+  institution_series?: Array<{ name: string; business: number; receipt: number; payment: number }>;
+}
+
+export const getMonthlyReport = async (params: Record<string, string | number | undefined>) => {
+  const response = await api.get<MonthlyReport>("/reports/monthly/", { params });
+  return response.data;
+};
+
+export const exportMonthlyReport = async (params: Record<string, string | number | undefined>) => {
+  const response = await api.get("/reports/monthly/export/", { params, responseType: "blob" });
+  return response.data as Blob;
+};
+
+export const getDashboard = async (institutionId?: number | "all") => {
+  const params: Record<string, string | number> = {};
+  if (institutionId && institutionId !== "all") {
+    params.institution_id = institutionId;
+  }
+  const response = await api.get<DashboardData>("/reports/dashboard/", { params });
+  return response.data;
+};
