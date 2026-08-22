@@ -1,4 +1,4 @@
-import { Button, Card, CardContent, Grid, MenuItem, Stack, TextField, Typography } from "@mui/material";
+import { Button, Card, CardContent, Grid2 as Grid, MenuItem, Stack, TextField, Typography } from "@mui/material";
 import { useEffect, useState } from "react";
 import PageHeader from "../../components/common/PageHeader";
 import ConfirmDialog from "../../components/common/ConfirmDialog";
@@ -136,7 +136,7 @@ export default function PartnerWagePage() {
         onConfirm={async () => {
           try {
             const institutionId = selectedInstitution === "all" ? institutions[0]?.id : selectedInstitution;
-            if (!institutionId || institutionId === "all") {
+            if (institutionId == null) {
               notify("Select a specific institution.", "error");
               return;
             }

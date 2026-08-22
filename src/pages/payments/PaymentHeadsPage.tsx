@@ -1,4 +1,4 @@
-import { Button, Card, CardContent, Grid, Stack, TextField } from "@mui/material";
+import { Button, Card, CardContent, Grid2 as Grid, Stack, TextField } from "@mui/material";
 import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import PageHeader from "../../components/common/PageHeader";

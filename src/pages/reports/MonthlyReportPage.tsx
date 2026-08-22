@@ -2,7 +2,7 @@ import {
   Button,
   Card,
   CardContent,
-  Grid,
+  Grid2 as Grid,
   MenuItem,
   Paper,
   Table,

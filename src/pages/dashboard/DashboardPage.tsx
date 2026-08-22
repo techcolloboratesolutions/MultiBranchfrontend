@@ -7,7 +7,7 @@ import {
   Box,
   Card,
   CardContent,
-  Grid,
+  Grid2 as Grid,
   MenuItem,
   Paper,
   Stack,
