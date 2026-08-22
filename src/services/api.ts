@@ -1,10 +1,19 @@
 import axios, { AxiosError, InternalAxiosRequestConfig } from "axios";
 
+const API_BASE = (import.meta.env.VITE_API_BASE_URL || "https://multi-branchbackend.vercel.app/api").replace(
+  /\/$/,
+  "",
+);
+
 const api = axios.create({
-  baseURL: import.meta.env.VITE_API_BASE_URL,
+  baseURL: API_BASE,
 });
 
 api.interceptors.request.use((config) => {
+  const url = config.url ?? "";
+  if (url.includes("/auth/lookup/") || url.includes("/auth/login/")) {
+    return config;
+  }
   const token = localStorage.getItem("access");
   if (token) {
     config.headers.Authorization = `Bearer ${token}`;
@@ -19,7 +28,15 @@ api.interceptors.response.use(
     const status = error.response?.status;
     const url = original?.url ?? "";
 
-    if (status === 401 && original && !original._retry && !url.includes("/auth/login/") && !url.includes("/auth/refresh/")) {
+    if (
+      status === 401 &&
+      original &&
+      !original._retry &&
+      !url.includes("/auth/login/") &&
+      !url.includes("/auth/refresh/") &&
+      !url.includes("/auth/logout/") &&
+      !url.includes("/auth/lookup/")
+    ) {
       original._retry = true;
       const refresh = localStorage.getItem("refresh");
       if (!refresh) {
@@ -27,7 +44,7 @@ api.interceptors.response.use(
         return Promise.reject(error);
       }
       try {
-        const { data } = await axios.post(`${import.meta.env.VITE_API_BASE_URL}/auth/refresh/`, {
+        const { data } = await axios.post(`${API_BASE}/auth/refresh/`, {
           refresh,
         });
         localStorage.setItem("access", data.access);
@@ -48,9 +65,6 @@ export function clearSession(): void {
   localStorage.removeItem("access");
   localStorage.removeItem("refresh");
   localStorage.removeItem("user");
-  if (window.location.pathname !== "/login") {
-    window.location.href = "/login";
-  }
 }
 
 export function getErrorMessage(error: unknown, fallback = "Something went wrong."): string {

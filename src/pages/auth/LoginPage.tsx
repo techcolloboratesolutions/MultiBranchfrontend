@@ -1,5 +1,5 @@
 import { Box, Button, Card, CardContent, MenuItem, Stack, TextField, Typography } from "@mui/material";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { useNavigate } from "react-router-dom";
 import { lookupUser } from "../../services/authService";
@@ -20,23 +20,37 @@ export default function LoginPage() {
   const navigate = useNavigate();
   const username = watch("username");
 
-  const onUsernameBlur = async () => {
-    if (!username) {
+  const clearLookup = () => {
+    setInstitution("");
+    setMainInstitution("");
+    setRole("");
+  };
+
+  const runLookup = async (value: string) => {
+    const trimmed = value.trim();
+    if (!trimmed) {
+      clearLookup();
+      setError("");
       return;
     }
     try {
-      const user = await lookupUser(username);
-      setInstitution(user.institution.name);
-      setMainInstitution(user.main_institution.name);
-      setRole(user.role);
+      const user = await lookupUser(trimmed);
+      setInstitution(user.institution?.name ?? "");
+      setMainInstitution(user.main_institution?.name ?? "");
+      setRole(user.role ?? "");
       setError("");
     } catch (err) {
-      setInstitution("");
-      setMainInstitution("");
-      setRole("");
+      clearLookup();
       setError(getErrorMessage(err, "User not found."));
     }
   };
+
+  useEffect(() => {
+    const handle = window.setTimeout(() => {
+      void runLookup(username);
+    }, 400);
+    return () => window.clearTimeout(handle);
+  }, [username]);
 
   const onSubmit = async (values: LoginRequest) => {
     setLoading(true);
@@ -72,7 +86,7 @@ export default function LoginPage() {
           </Typography>
           <form onSubmit={handleSubmit(onSubmit)}>
             <Stack spacing={2}>
-              <TextField label="Username" autoComplete="username" {...register("username")} onBlur={onUsernameBlur} />
+              <TextField label="Username" autoComplete="username" {...register("username")} />
               <TextField label="Password" type="password" autoComplete="current-password" {...register("password")} />
               <TextField label="Institution" value={institution} InputProps={{ readOnly: locked }} disabled={!institution} />
               <TextField label="Main Institution" value={mainInstitution} InputProps={{ readOnly: locked }} disabled={!mainInstitution} />
