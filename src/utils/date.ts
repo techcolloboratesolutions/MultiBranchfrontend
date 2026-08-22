@@ -24,3 +24,12 @@ export function currentYear(): number {
 export function currentMonth(): number {
   return new Date().getMonth() + 1;
 }
+
+export function monthDateIsos(year: number, month: number): string[] {
+  const lastDay = new Date(year, month, 0).getDate();
+  return Array.from({ length: lastDay }, (_, index) => {
+    const day = String(index + 1).padStart(2, "0");
+    const monthPart = String(month).padStart(2, "0");
+    return `${year}-${monthPart}-${day}`;
+  });
+}

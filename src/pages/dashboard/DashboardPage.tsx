@@ -33,6 +33,8 @@ import {
 } from "recharts";
 import PageHeader from "../../components/common/PageHeader";
 import LoadingState from "../../components/common/LoadingState";
+import ResponsiveTable from "../../components/tables/ResponsiveTable";
+import BranchMonthDetailDialog from "../../components/reports/BranchMonthDetailDialog";
 import { useAuth } from "../../hooks/useAuth";
 import { getDashboard, DashboardData } from "../../services/reportService";
 import { listInstitutions } from "../../services/institutionService";
@@ -50,6 +52,7 @@ export default function DashboardPage() {
   const [institutions, setInstitutions] = useState<Institution[]>([]);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(true);
+  const [detailBranch, setDetailBranch] = useState<{ id: number; name: string } | null>(null);
 
   useEffect(() => {
     listInstitutions()
@@ -69,6 +72,11 @@ export default function DashboardPage() {
     return <LoadingState />;
   }
 
+  const isAllBranches = isAdmin && operatingInstitutionId === "all";
+  const todayByBranch = data?.institution_today ?? [];
+  const monthlyByBranch = data?.institution_series ?? [];
+  const chartData = isAllBranches ? todayByBranch : (data?.daily_series ?? []);
+  const chartCategory = isAllBranches ? "name" : "label";
   const todayBusiness = Number(data?.today.business ?? 0);
   const monthBusiness = Number(data?.month.business ?? 0);
   const monthlySeries = [...buildMonthlySeries(data)].sort((a, b) => {
@@ -82,7 +90,7 @@ export default function DashboardPage() {
     <Box>
       <PageHeader
         title={isAdmin ? "Admin Dashboard" : "Manager Dashboard"}
-        subtitle={data?.institution.name}
+        subtitle={isAllBranches ? "All branches — today and this month" : data?.institution.name}
       />
       {isAdmin ? (
         <TextField
@@ -130,32 +138,36 @@ export default function DashboardPage() {
       </Grid>
 
       <Grid container spacing={2}>
-        <Grid size={{ xs: 12, lg: isAdmin ? 7 : 12 }}>
-          <Card sx={{ height: "100%", boxShadow: "0 10px 30px rgba(15,61,76,0.08)" }}>
+        <Grid size={{ xs: 12, lg: isAdmin && !isAllBranches ? 7 : 12 }}>
+          <Card sx={{ height: "100%" }}>
             <CardContent>
               <Typography variant="h6" gutterBottom>
-                Daily Receipt vs Payment
+                {isAllBranches ? "Today's Receipt vs Payment by branch" : "Daily Receipt vs Payment"}
               </Typography>
               <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-                This month — each day of the selected branch
+                {isAllBranches
+                  ? "Entries posted today across every branch"
+                  : "This month — each day of the selected branch"}
               </Typography>
-              <ResponsiveContainer width="100%" height={320}>
-                <BarChart data={data?.daily_series ?? []} barGap={4}>
+              <Box sx={{ width: "100%", height: { xs: 240, sm: 300, md: 360 } }}>
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={chartData} barGap={4}>
                   <CartesianGrid strokeDasharray="3 3" vertical={false} />
-                  <XAxis dataKey="label" interval={0} angle={-35} textAnchor="end" height={60} />
-                  <YAxis tickFormatter={(value) => compactInr(Number(value))} />
+                  <XAxis dataKey={chartCategory} interval="preserveStartEnd" angle={-35} textAnchor="end" height={70} tick={{ fontSize: 11 }} />
+                  <YAxis tickFormatter={(value) => compactInr(Number(value))} width={48} />
                   <Tooltip formatter={(value) => formatInr(Number(value))} />
                   <Legend />
                   <Bar dataKey="receipt" fill={RECEIPT_COLOR} name="Receipt" radius={[6, 6, 0, 0]} />
                   <Bar dataKey="payment" fill={PAYMENT_COLOR} name="Payment" radius={[6, 6, 0, 0]} />
                 </BarChart>
               </ResponsiveContainer>
+              </Box>
             </CardContent>
           </Card>
         </Grid>
-        {isAdmin ? (
+        {isAdmin && !isAllBranches ? (
           <Grid size={{ xs: 12, lg: 5 }}>
-            <Card sx={{ height: "100%", boxShadow: "0 10px 30px rgba(15,61,76,0.08)" }}>
+            <Card sx={{ height: "100%" }}>
               <CardContent>
                 <Typography variant="h6" gutterBottom>
                   Institution-wise Business
@@ -163,19 +175,90 @@ export default function DashboardPage() {
                 <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
                   Current month net business by branch
                 </Typography>
-                <ResponsiveContainer width="100%" height={320}>
+                <Box sx={{ width: "100%", height: { xs: 280, md: 320 } }}>
+                <ResponsiveContainer width="100%" height="100%">
                   <BarChart
-                    data={data?.institution_series ?? []}
+                    data={monthlyByBranch}
                     layout="vertical"
-                    margin={{ left: 24 }}
+                    margin={{ left: 8, right: 8 }}
                   >
                     <CartesianGrid strokeDasharray="3 3" horizontal={false} />
                     <XAxis type="number" tickFormatter={(value) => compactInr(Number(value))} />
-                    <YAxis type="category" dataKey="name" width={110} />
+                    <YAxis type="category" dataKey="name" width={88} tick={{ fontSize: 11 }} />
                     <Tooltip formatter={(value) => formatInr(Number(value))} />
                     <Bar dataKey="business" fill={BUSINESS_COLOR} name="Business" radius={[0, 6, 6, 0]} />
                   </BarChart>
                 </ResponsiveContainer>
+                </Box>
+              </CardContent>
+            </Card>
+          </Grid>
+        ) : null}
+        {isAllBranches ? (
+          <Grid size={{ xs: 12 }}>
+            <Card>
+              <CardContent>
+                <Typography variant="h6" gutterBottom>
+                  Monthly summary by branch
+                </Typography>
+                <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+                  Receipt, payment, and business for the current month. Tap a branch row for day-by-day receipt and payment heads.
+                </Typography>
+                <ResponsiveTable
+                  rows={[
+                    ...monthlyByBranch,
+                    {
+                      id: "total",
+                      name: "Total",
+                      receipt: monthlyByBranch.reduce((sum, row) => sum + row.receipt, 0),
+                      payment: monthlyByBranch.reduce((sum, row) => sum + row.payment, 0),
+                      business: monthlyByBranch.reduce((sum, row) => sum + row.business, 0),
+                    },
+                  ]}
+                  rowKey={(row) => row.id ?? row.name}
+                  onRowClick={(row) => {
+                    if (row.name === "Total" || typeof row.id !== "number") {
+                      return;
+                    }
+                    setDetailBranch({ id: row.id, name: row.name });
+                  }}
+                  columns={[
+                    { key: "name", label: "Branch" },
+                    {
+                      key: "receipt",
+                      label: "Receipt",
+                      align: "right",
+                      render: (row) => (
+                        <Typography component="span" sx={{ color: RECEIPT_COLOR, fontWeight: row.name === "Total" ? 700 : 500 }}>
+                          {formatInr(row.receipt)}
+                        </Typography>
+                      ),
+                    },
+                    {
+                      key: "payment",
+                      label: "Payment",
+                      align: "right",
+                      render: (row) => (
+                        <Typography component="span" sx={{ color: PAYMENT_COLOR, fontWeight: row.name === "Total" ? 700 : 500 }}>
+                          {formatInr(row.payment)}
+                        </Typography>
+                      ),
+                    },
+                    {
+                      key: "business",
+                      label: "Business",
+                      align: "right",
+                      render: (row) => (
+                        <Typography
+                          component="span"
+                          sx={{ fontWeight: 700, color: row.business < 0 ? "#b91c1c" : BUSINESS_COLOR }}
+                        >
+                          {formatInr(row.business)}
+                        </Typography>
+                      ),
+                    },
+                  ]}
+                />
               </CardContent>
             </Card>
           </Grid>
@@ -232,6 +315,12 @@ export default function DashboardPage() {
           </Grid>
         ) : null}
       </Grid>
+      <BranchMonthDetailDialog
+        open={Boolean(detailBranch)}
+        branchName={detailBranch?.name ?? ""}
+        institutionId={detailBranch?.id ?? null}
+        onClose={() => setDetailBranch(null)}
+      />
     </Box>
   );
 }
@@ -283,8 +372,8 @@ function Kpi({
       <Card
         sx={{
           overflow: "hidden",
-          boxShadow: "0 8px 24px rgba(15,61,76,0.08)",
           borderTop: `4px solid ${accent}`,
+          height: "100%",
         }}
       >
         <CardContent>

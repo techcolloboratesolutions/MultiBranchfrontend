@@ -1,4 +1,5 @@
-import { Box, Button, Card, CardContent, MenuItem, Stack, TextField, Typography } from "@mui/material";
+import AccountBalanceIcon from "@mui/icons-material/AccountBalance";
+import { Box, Button, Card, CardContent, Chip, MenuItem, Stack, TextField, Typography } from "@mui/material";
 import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { useNavigate } from "react-router-dom";
@@ -73,28 +74,44 @@ export default function LoginPage() {
       display="flex"
       alignItems="center"
       justifyContent="center"
-      px={2}
-      sx={{ background: "linear-gradient(160deg, #0f3d4c 0%, #1b6b7a 55%, #f4f7f8 55%)" }}
+      px={{ xs: 2, sm: 3 }}
+      py={4}
+      sx={{
+        background:
+          "radial-gradient(900px 420px at 15% 10%, rgba(212,160,23,0.22), transparent), linear-gradient(165deg, #0c3a46 0%, #156575 48%, #eef4f6 48%)",
+      }}
     >
-      <Card sx={{ width: "100%", maxWidth: 460, boxShadow: 6 }}>
-        <CardContent sx={{ p: { xs: 3, sm: 4 } }}>
-          <Typography variant="h5" gutterBottom>
-            MultiBranches
-          </Typography>
-          <Typography color="text.secondary" sx={{ mb: 3 }}>
-            Sign in to manage branch receipts, payments, and partner wages.
-          </Typography>
+      <Card sx={{ width: "100%", maxWidth: 480, borderRadius: 4, overflow: "hidden" }}>
+        <Box sx={{ height: 8, bgcolor: "secondary.main" }} />
+        <CardContent sx={{ p: { xs: 3, sm: 4.5 } }}>
+          <Stack direction="row" spacing={1.5} alignItems="center" sx={{ mb: 2 }}>
+            <Box
+              sx={{
+                width: 48,
+                height: 48,
+                borderRadius: 2.5,
+                bgcolor: "primary.main",
+                color: "white",
+                display: "grid",
+                placeItems: "center",
+              }}
+            >
+              <AccountBalanceIcon />
+            </Box>
+            <Box>
+              <Typography variant="h5">MultiBranches</Typography>
+              <Typography color="text.secondary" variant="body2">
+                Sign in to your branch workspace
+              </Typography>
+            </Box>
+          </Stack>
           <form onSubmit={handleSubmit(onSubmit)}>
             <Stack spacing={2}>
               <TextField label="Username" autoComplete="username" {...register("username")} />
               <TextField label="Password" type="password" autoComplete="current-password" {...register("password")} />
               <TextField label="Institution" value={institution} InputProps={{ readOnly: locked }} disabled={!institution} />
               <TextField label="Main Institution" value={mainInstitution} InputProps={{ readOnly: locked }} disabled={!mainInstitution} />
-              {role ? (
-                <TextField select label="Role" value={role} disabled>
-                  <MenuItem value={role}>{role}</MenuItem>
-                </TextField>
-              ) : null}
+              {role ? <Chip label={role} color="primary" sx={{ alignSelf: "flex-start", fontWeight: 700 }} /> : null}
               {error ? (
                 <Typography color="error" variant="body2">
                   {error}

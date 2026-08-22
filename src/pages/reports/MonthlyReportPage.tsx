@@ -21,6 +21,7 @@ import { useAuth } from "../../hooks/useAuth";
 import { useToast } from "../../context/ToastContext";
 import { listInstitutions } from "../../services/institutionService";
 import { exportMonthlyReport, getMonthlyReport, MonthlyReport } from "../../services/reportService";
+import DayBranchesDetailDialog from "../../components/reports/DayBranchesDetailDialog";
 import { getErrorMessage } from "../../services/api";
 import { Institution } from "../../types/institution";
 import { formatInr } from "../../utils/currency";
@@ -45,6 +46,7 @@ export default function MonthlyReportPage() {
   const [month, setMonth] = useState(currentMonth());
   const [institutions, setInstitutions] = useState<Institution[]>([]);
   const [report, setReport] = useState<MonthlyReport | null>(null);
+  const [detailDate, setDetailDate] = useState<string | null>(null);
   const selectedInstitution = isAdmin ? operatingInstitutionId : user?.institution.id ?? "all";
 
   const params = () => {
@@ -72,7 +74,11 @@ export default function MonthlyReportPage() {
     <>
       <PageHeader
         title="Monthly Receipts & Payments"
-        subtitle="All active receipt heads and payment heads are shown together. The last row is the month sum for each head."
+        subtitle={
+          isAdmin
+            ? "Click a date row to see every branch’s receipts and payments for that day."
+            : "All active receipt heads and payment heads are shown together. The last row is the month sum for each head."
+        }
       />
       <Card sx={{ mb: 2 }}>
         <CardContent>
@@ -165,7 +171,12 @@ export default function MonthlyReportPage() {
               </TableRow>
             ) : (
               report?.rows.map((row) => (
-                <TableRow key={row.date} hover>
+                <TableRow
+                  key={row.date}
+                  hover
+                  onClick={isAdmin ? () => setDetailDate(row.date) : undefined}
+                  sx={isAdmin ? { cursor: "pointer" } : undefined}
+                >
                   <TableCell sx={{ whiteSpace: "nowrap" }}>{formatDisplayDate(row.date)}</TableCell>
                   {receiptHeads.map((head) => (
                     <TableCell key={`${row.date}-r-${head.id}`} align="right">
@@ -214,6 +225,13 @@ export default function MonthlyReportPage() {
           </TableBody>
         </Table>
       </TableContainer>
+      {isAdmin ? (
+        <DayBranchesDetailDialog
+          open={Boolean(detailDate)}
+          businessDate={detailDate}
+          onClose={() => setDetailDate(null)}
+        />
+      ) : null}
     </>
   );
 }

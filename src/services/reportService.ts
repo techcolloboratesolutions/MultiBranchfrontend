@@ -15,6 +15,28 @@ export interface MonthlyReportRow {
   business: string;
 }
 
+export interface DayByInstitutionRow {
+  institution_id: number;
+  institution_name: string;
+  receipts: Record<string, string>;
+  payments: Record<string, string>;
+  receipt: string;
+  payment: string;
+  business: string;
+}
+
+export interface DayByInstitutionReport {
+  date: string;
+  receipt_heads: ReportHead[];
+  payment_heads: ReportHead[];
+  rows: DayByInstitutionRow[];
+  receipt_head_totals: Record<string, string>;
+  payment_head_totals: Record<string, string>;
+  total_receipt: string;
+  total_payment: string;
+  total_business: string;
+}
+
 export interface MonthlyReport {
   year: number;
   month: number;
@@ -45,8 +67,29 @@ export interface DashboardData {
   }>;
   institutions_total?: number;
   institutions_active?: number;
-  institution_series?: Array<{ name: string; business: number; receipt: number; payment: number }>;
+  scope?: "all" | "institution";
+  institution_series?: Array<{
+    id?: number;
+    name: string;
+    business: number;
+    receipt: number;
+    payment: number;
+  }>;
+  institution_today?: Array<{
+    id?: number;
+    name: string;
+    business: number;
+    receipt: number;
+    payment: number;
+  }>;
 }
+
+export const getDayByInstitutionReport = async (businessDate: string) => {
+  const response = await api.get<DayByInstitutionReport>("/reports/monthly/by-institution/", {
+    params: { date: businessDate },
+  });
+  return response.data;
+};
 
 export const getMonthlyReport = async (params: Record<string, string | number | undefined>) => {
   const response = await api.get<MonthlyReport>("/reports/monthly/", { params });
