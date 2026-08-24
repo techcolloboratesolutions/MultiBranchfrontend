@@ -1,5 +1,5 @@
 import api, { unwrapList } from "./api";
-import { DailyPayment, PaymentHead } from "../types/payment";
+import { DailyPayment, PaymentHead, RecurringType } from "../types/payment";
 
 export const listPaymentHeads = async (active?: "Y" | "N"): Promise<PaymentHead[]> => {
   const params: Record<string, string | number> = { page_size: 200 };
@@ -44,20 +44,38 @@ export interface PaymentEntryRow {
   payment_head: number;
   code: string;
   description: string;
+  recurring_type?: RecurringType;
   amount: string;
   payment_id: number | null;
   entered_by_name: string | null;
 }
 
+export interface PaymentEntrySheet {
+  institution_id: number | null;
+  business_date: string;
+  layout?: "two_column";
+  recurring_types?: RecurringType[];
+  daily_selected?: boolean;
+  monthly_selected?: boolean;
+  daily_rows?: PaymentEntryRow[];
+  monthly_rows?: PaymentEntryRow[];
+  rows: PaymentEntryRow[];
+}
+
 export const getPaymentEntrySheet = async (params: {
   business_date: string;
   institution_id?: number;
-}) => {
-  const response = await api.get<{
-    institution_id: number | null;
-    business_date: string;
-    rows: PaymentEntryRow[];
-  }>("/payments/entry-sheet/", { params });
+  daily?: boolean;
+  monthly?: boolean;
+}): Promise<PaymentEntrySheet> => {
+  const response = await api.get<PaymentEntrySheet>("/payments/entry-sheet/", {
+    params: {
+      business_date: params.business_date,
+      institution_id: params.institution_id,
+      daily: params.daily === false ? "false" : "true",
+      monthly: params.monthly ? "true" : "false",
+    },
+  });
   return response.data;
 };
 

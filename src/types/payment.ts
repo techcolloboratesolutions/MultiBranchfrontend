@@ -1,8 +1,11 @@
+export type RecurringType = "Daily" | "Monthly";
+
 export interface PaymentHead {
   id: number;
   code: string;
   description: string;
   is_active: boolean;
+  recurring_type: RecurringType;
 }
 
 export interface DailyPayment {

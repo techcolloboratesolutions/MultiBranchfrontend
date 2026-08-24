@@ -89,7 +89,7 @@ export default function AppLayout({ children }: { children: ReactNode }) {
       <Toolbar sx={{ px: 2.5, minHeight: { xs: 64 } }}>
         <Box>
           <Typography sx={{ fontFamily: "Fraunces, Georgia, serif", fontWeight: 700, fontSize: "1.2rem" }}>
-            MultiBranches
+            BJF Bay
           </Typography>
           <Typography variant="caption" sx={{ opacity: 0.7 }}>
             Branch operations
