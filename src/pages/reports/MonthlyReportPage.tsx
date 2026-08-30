@@ -4,11 +4,9 @@ import {
   CardContent,
   Grid2 as Grid,
   MenuItem,
-  Paper,
   Table,
   TableBody,
   TableCell,
-  TableContainer,
   TableHead,
   TableRow,
   TextField,
@@ -17,6 +15,7 @@ import {
 import { useEffect, useState } from "react";
 import PageHeader from "../../components/common/PageHeader";
 import InstitutionSelect from "../../components/forms/InstitutionSelect";
+import HorizontalScrollTable from "../../components/tables/HorizontalScrollTable";
 import { useAuth } from "../../hooks/useAuth";
 import { useToast } from "../../context/ToastContext";
 import { listInstitutions } from "../../services/institutionService";
@@ -38,6 +37,7 @@ function downloadBlob(blob: Blob, filename: string) {
 
 const receiptHeaderSx = { fontWeight: 700, backgroundColor: "#e8f3f5", whiteSpace: "nowrap" };
 const paymentHeaderSx = { fontWeight: 700, backgroundColor: "#f7f0e2", whiteSpace: "nowrap" };
+const expenseHeaderSx = { fontWeight: 700, backgroundColor: "#f3e8ee", whiteSpace: "nowrap" };
 
 export default function MonthlyReportPage() {
   const { isAdmin, user, operatingInstitutionId, setOperatingInstitutionId } = useAuth();
@@ -69,15 +69,17 @@ export default function MonthlyReportPage() {
 
   const receiptHeads = report?.receipt_heads ?? [];
   const paymentHeads = report?.payment_heads ?? [];
+  const expenseHeads = report?.expense_heads ?? [];
+  const colCount = receiptHeads.length + paymentHeads.length + expenseHeads.length + 6;
 
   return (
     <>
       <PageHeader
-        title="Monthly Receipts & Payments"
+        title="Monthly Sales, Purchases & Expenses"
         subtitle={
           isAdmin
-            ? "Click a date row to see every branch’s receipts and payments for that day."
-            : "All active receipt heads and payment heads are shown together. The last row is the month sum for each head."
+            ? "Click a date row to see every branch’s sales, purchases, and expenses for that day. Balance = sales + purchase − expenses."
+            : "All active heads are shown together. Balance = sales + purchase − expenses. The last row is the month sum for each head."
         }
       />
       <Card sx={{ mb: 2 }}>
@@ -122,7 +124,7 @@ export default function MonthlyReportPage() {
           </Grid>
         </CardContent>
       </Card>
-      <TableContainer component={Paper} sx={{ overflowX: "auto" }}>
+      <HorizontalScrollTable label="Scroll heads left / right">
         <Table size="small">
           <TableHead>
             <TableRow>
@@ -130,13 +132,19 @@ export default function MonthlyReportPage() {
                 Date
               </TableCell>
               <TableCell align="center" colSpan={receiptHeads.length + 1} sx={receiptHeaderSx}>
-                Receipt Heads
+                Sales Heads
               </TableCell>
               <TableCell align="center" colSpan={paymentHeads.length + 1} sx={paymentHeaderSx}>
-                Payment Heads
+                Purchase Heads
               </TableCell>
               <TableCell rowSpan={2} sx={{ fontWeight: 700, verticalAlign: "bottom" }} align="right">
                 Business
+              </TableCell>
+              <TableCell align="center" colSpan={expenseHeads.length + 1} sx={expenseHeaderSx}>
+                Expense Heads
+              </TableCell>
+              <TableCell rowSpan={2} sx={{ fontWeight: 700, verticalAlign: "bottom" }} align="right">
+                Balance
               </TableCell>
             </TableRow>
             <TableRow>
@@ -149,7 +157,7 @@ export default function MonthlyReportPage() {
                 </TableCell>
               ))}
               <TableCell align="right" sx={receiptHeaderSx}>
-                Total Receipt
+                Total Sales
               </TableCell>
               {paymentHeads.map((head) => (
                 <TableCell key={`ph-${head.id}`} align="right" sx={paymentHeaderSx}>
@@ -160,14 +168,25 @@ export default function MonthlyReportPage() {
                 </TableCell>
               ))}
               <TableCell align="right" sx={paymentHeaderSx}>
-                Total Payment
+                Total Purchase
+              </TableCell>
+              {expenseHeads.map((head) => (
+                <TableCell key={`eh-${head.id}`} align="right" sx={expenseHeaderSx}>
+                  {head.code}
+                  <Typography variant="caption" display="block" color="text.secondary">
+                    {head.description}
+                  </Typography>
+                </TableCell>
+              ))}
+              <TableCell align="right" sx={expenseHeaderSx}>
+                Total Expense
               </TableCell>
             </TableRow>
           </TableHead>
           <TableBody>
             {(report?.rows ?? []).length === 0 ? (
               <TableRow>
-                <TableCell colSpan={receiptHeads.length + paymentHeads.length + 4}>No transactions for this month.</TableCell>
+                <TableCell colSpan={colCount}>No transactions for this month.</TableCell>
               </TableRow>
             ) : (
               report?.rows.map((row) => (
@@ -197,6 +216,17 @@ export default function MonthlyReportPage() {
                   <TableCell align="right" sx={{ fontWeight: 700 }}>
                     {formatInr(row.business)}
                   </TableCell>
+                  {expenseHeads.map((head) => (
+                    <TableCell key={`${row.date}-e-${head.id}`} align="right">
+                      {formatInr(row.expenses?.[String(head.id)] ?? "0")}
+                    </TableCell>
+                  ))}
+                  <TableCell align="right" sx={{ fontWeight: 700 }}>
+                    {formatInr(row.expense)}
+                  </TableCell>
+                  <TableCell align="right" sx={{ fontWeight: 700 }}>
+                    {formatInr(row.balance)}
+                  </TableCell>
                 </TableRow>
               ))
             )}
@@ -221,10 +251,21 @@ export default function MonthlyReportPage() {
               <TableCell align="right" sx={{ fontWeight: 700 }}>
                 {formatInr(report?.total_business)}
               </TableCell>
+              {expenseHeads.map((head) => (
+                <TableCell key={`sum-e-${head.id}`} align="right" sx={{ fontWeight: 700 }}>
+                  {formatInr(report?.expense_head_totals[String(head.id)] ?? "0")}
+                </TableCell>
+              ))}
+              <TableCell align="right" sx={{ fontWeight: 700 }}>
+                {formatInr(report?.total_expense)}
+              </TableCell>
+              <TableCell align="right" sx={{ fontWeight: 700 }}>
+                {formatInr(report?.total_balance)}
+              </TableCell>
             </TableRow>
           </TableBody>
         </Table>
-      </TableContainer>
+      </HorizontalScrollTable>
       {isAdmin ? (
         <DayBranchesDetailDialog
           open={Boolean(detailDate)}

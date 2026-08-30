@@ -4,11 +4,9 @@ import {
   DialogActions,
   DialogContent,
   DialogTitle,
-  Paper,
   Table,
   TableBody,
   TableCell,
-  TableContainer,
   TableHead,
   TableRow,
   Typography,
@@ -17,6 +15,7 @@ import {
 } from "@mui/material";
 import { useEffect, useState } from "react";
 import LoadingState from "../common/LoadingState";
+import HorizontalScrollTable from "../tables/HorizontalScrollTable";
 import { getErrorMessage } from "../../services/api";
 import { DayByInstitutionReport, getDayByInstitutionReport } from "../../services/reportService";
 import { formatInr } from "../../utils/currency";
@@ -24,6 +23,7 @@ import { formatDisplayDate } from "../../utils/date";
 
 const receiptHeaderSx = { fontWeight: 700, backgroundColor: "#e8f3f5", whiteSpace: "nowrap" };
 const paymentHeaderSx = { fontWeight: 700, backgroundColor: "#f7f0e2", whiteSpace: "nowrap" };
+const expenseHeaderSx = { fontWeight: 700, backgroundColor: "#f3e8ee", whiteSpace: "nowrap" };
 
 interface Props {
   open: boolean;
@@ -52,20 +52,21 @@ export default function DayBranchesDetailDialog({ open, businessDate, onClose }:
 
   const receiptHeads = report?.receipt_heads ?? [];
   const paymentHeads = report?.payment_heads ?? [];
+  const expenseHeads = report?.expense_heads ?? [];
 
   return (
     <Dialog open={open} onClose={onClose} fullWidth maxWidth="xl" fullScreen={fullScreen}>
       <DialogTitle>
         All branches
         <Typography variant="body2" color="text.secondary">
-          Receipts and payments on {businessDate ? formatDisplayDate(businessDate) : ""}
+          Sales, purchases, and expenses on {businessDate ? formatDisplayDate(businessDate) : ""}
         </Typography>
       </DialogTitle>
       <DialogContent dividers>
         {loading ? <LoadingState /> : null}
         {error ? <Typography color="error">{error}</Typography> : null}
         {!loading && !error ? (
-          <TableContainer component={Paper} variant="outlined" sx={{ overflowX: "auto" }}>
+          <HorizontalScrollTable outlined label="Scroll heads left / right">
             <Table size="small">
               <TableHead>
                 <TableRow>
@@ -73,13 +74,19 @@ export default function DayBranchesDetailDialog({ open, businessDate, onClose }:
                     Branch
                   </TableCell>
                   <TableCell align="center" colSpan={receiptHeads.length + 1} sx={receiptHeaderSx}>
-                    Receipt
+                    Sales Heads
                   </TableCell>
                   <TableCell align="center" colSpan={paymentHeads.length + 1} sx={paymentHeaderSx}>
-                    Payment
+                    Purchase Heads
                   </TableCell>
                   <TableCell rowSpan={2} sx={{ fontWeight: 700, verticalAlign: "bottom" }} align="right">
                     Business
+                  </TableCell>
+                  <TableCell align="center" colSpan={expenseHeads.length + 1} sx={expenseHeaderSx}>
+                    Expense Heads
+                  </TableCell>
+                  <TableCell rowSpan={2} sx={{ fontWeight: 700, verticalAlign: "bottom" }} align="right">
+                    Balance
                   </TableCell>
                 </TableRow>
                 <TableRow>
@@ -97,6 +104,14 @@ export default function DayBranchesDetailDialog({ open, businessDate, onClose }:
                     </TableCell>
                   ))}
                   <TableCell align="right" sx={paymentHeaderSx}>
+                    Total
+                  </TableCell>
+                  {expenseHeads.map((head) => (
+                    <TableCell key={`eh-${head.id}`} align="right" sx={expenseHeaderSx}>
+                      {head.code}
+                    </TableCell>
+                  ))}
+                  <TableCell align="right" sx={expenseHeaderSx}>
                     Total
                   </TableCell>
                 </TableRow>
@@ -124,6 +139,17 @@ export default function DayBranchesDetailDialog({ open, businessDate, onClose }:
                     <TableCell align="right" sx={{ fontWeight: 700 }}>
                       {formatInr(row.business)}
                     </TableCell>
+                    {expenseHeads.map((head) => (
+                      <TableCell key={`${row.institution_id}-e-${head.id}`} align="right">
+                        {formatInr(row.expenses?.[String(head.id)] ?? "0")}
+                      </TableCell>
+                    ))}
+                    <TableCell align="right" sx={{ fontWeight: 700, color: "#9d174d" }}>
+                      {formatInr(row.expense)}
+                    </TableCell>
+                    <TableCell align="right" sx={{ fontWeight: 700 }}>
+                      {formatInr(row.balance)}
+                    </TableCell>
                   </TableRow>
                 ))}
                 <TableRow sx={{ bgcolor: "rgba(15,76,92,0.06)" }}>
@@ -147,10 +173,21 @@ export default function DayBranchesDetailDialog({ open, businessDate, onClose }:
                   <TableCell align="right" sx={{ fontWeight: 700 }}>
                     {formatInr(report?.total_business)}
                   </TableCell>
+                  {expenseHeads.map((head) => (
+                    <TableCell key={`sum-e-${head.id}`} align="right" sx={{ fontWeight: 700 }}>
+                      {formatInr(report?.expense_head_totals[String(head.id)] ?? "0")}
+                    </TableCell>
+                  ))}
+                  <TableCell align="right" sx={{ fontWeight: 700 }}>
+                    {formatInr(report?.total_expense)}
+                  </TableCell>
+                  <TableCell align="right" sx={{ fontWeight: 700 }}>
+                    {formatInr(report?.total_balance)}
+                  </TableCell>
                 </TableRow>
               </TableBody>
             </Table>
-          </TableContainer>
+          </HorizontalScrollTable>
         ) : null}
       </DialogContent>
       <DialogActions sx={{ px: 3, py: 2 }}>

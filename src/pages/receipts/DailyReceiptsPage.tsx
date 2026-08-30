@@ -70,7 +70,7 @@ export default function DailyReceiptsPage() {
 
   const onSave = async () => {
     if (selectedInstitution === "all") {
-      notify("Select a specific institution to save receipts.", "error");
+      notify("Select a specific institution to save sales.", "error");
       return;
     }
     const lines = rows
@@ -90,7 +90,7 @@ export default function DailyReceiptsPage() {
         business_date: businessDate,
         lines,
       });
-      notify("Receipts saved.");
+      notify("Sales saved.");
       await loadSheet();
     } catch (err) {
       notify(getErrorMessage(err), "error");
@@ -102,8 +102,8 @@ export default function DailyReceiptsPage() {
   return (
     <>
       <PageHeader
-        title="Daily Receipt Entry"
-        subtitle="Every active receipt head (ACTIVE = Y) is shown in this table for amount entry."
+        title="Daily Sales Entry"
+        subtitle="Every active sales head (ACTIVE = Y) is shown in this table for amount entry."
       />
       <Card sx={{ mb: 2 }}>
         <CardContent>
@@ -144,7 +144,7 @@ export default function DailyReceiptsPage() {
               <TableHead>
                 <TableRow>
                   <TableCell sx={{ fontWeight: 700 }}>Code</TableCell>
-                  <TableCell sx={{ fontWeight: 700 }}>Receipt Head</TableCell>
+                  <TableCell sx={{ fontWeight: 700 }}>Sales Head</TableCell>
                   <TableCell sx={{ fontWeight: 700 }} align="right">
                     Amount
                   </TableCell>
@@ -156,7 +156,7 @@ export default function DailyReceiptsPage() {
                 {rows.length === 0 ? (
                   <TableRow>
                     <TableCell colSpan={5}>
-                      No active receipt heads (ACTIVE = Y). Add them under Administration → Receipt Heads, or run seed_data.
+                      No active sales heads (ACTIVE = Y). Add them under Administration → Sales Heads, or run seed_data.
                     </TableCell>
                   </TableRow>
                 ) : (
@@ -205,14 +205,14 @@ export default function DailyReceiptsPage() {
       </Card>
       <ConfirmDialog
         open={Boolean(toDeactivate)}
-        title="Deactivate receipt"
+        title="Deactivate sale"
         message="This transaction will be marked inactive. It will not be deleted."
         onClose={() => setToDeactivate(null)}
         onConfirm={async () => {
           if (!toDeactivate?.receipt_id) return;
           try {
             await deactivateReceipt(toDeactivate.receipt_id);
-            notify("Receipt deactivated.");
+            notify("Sale deactivated.");
             setToDeactivate(null);
             await loadSheet();
           } catch (err) {

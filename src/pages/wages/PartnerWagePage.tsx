@@ -112,9 +112,11 @@ export default function PartnerWagePage() {
       {preview ? (
         <>
           <Stack direction={{ xs: "column", sm: "row" }} spacing={2} sx={{ mb: 2 }}>
-            <Typography>Total Receipt: {formatInr(preview.total_receipt)}</Typography>
-            <Typography>Total Payment: {formatInr(preview.total_payment)}</Typography>
+            <Typography>Total Sales: {formatInr(preview.total_receipt)}</Typography>
+            <Typography>Total Purchase: {formatInr(preview.total_payment)}</Typography>
+            <Typography>Total Expense: {formatInr(preview.total_expense)}</Typography>
             <Typography>Total Business: {formatInr(preview.total_business)}</Typography>
+            <Typography>Balance: {formatInr(preview.total_balance)}</Typography>
             <Typography>Share total: {preview.share_total}%</Typography>
           </Stack>
           <ResponsiveTable
@@ -131,7 +133,7 @@ export default function PartnerWagePage() {
       <ConfirmDialog
         open={confirmOpen}
         title="Save partner wages"
-        message="The server will recalculate receipts, payments, and shares, then save. Continue?"
+        message="The server will recalculate sales, purchases, and shares, then save. Continue?"
         onClose={() => setConfirmOpen(false)}
         onConfirm={async () => {
           try {

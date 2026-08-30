@@ -22,7 +22,7 @@ export default function ReceiptHeadsPage() {
 
   return (
     <>
-      <PageHeader title="Receipt Heads" />
+      <PageHeader title="Sales Heads" />
       <Card sx={{ mb: 2 }}>
         <CardContent>
           <form

@@ -11,7 +11,9 @@ export interface WagePreview {
   month: number;
   total_receipt: string;
   total_payment: string;
+  total_expense: string;
   total_business: string;
+  total_balance: string;
   share_total: string;
   partners: WagePartnerRow[];
   saved?: boolean;

@@ -15,6 +15,7 @@ import MenuIcon from "@mui/icons-material/Menu";
 import PaymentsIcon from "@mui/icons-material/Payments";
 import PeopleIcon from "@mui/icons-material/People";
 import ReceiptLongIcon from "@mui/icons-material/ReceiptLong";
+import RequestQuoteIcon from "@mui/icons-material/RequestQuote";
 import {
   AppBar,
   Avatar,
@@ -57,9 +58,10 @@ export default function AppLayout({ children }: { children: ReactNode }) {
   const items = useMemo<NavItem[]>(
     () => [
       { label: "Dashboard", to: "/", icon: <DashboardIcon />, section: "Overview" },
-      { label: "Daily Receipts", to: "/receipts", icon: <ReceiptLongIcon />, section: "Daily work" },
-      { label: "Daily Payments", to: "/payments", icon: <PaymentsIcon />, section: "Daily work" },
-      { label: "Monthly Receipts & Payments", to: "/reports/monthly", icon: <AssessmentIcon />, section: "Reports" },
+      { label: "Daily Sales", to: "/receipts", icon: <ReceiptLongIcon />, section: "Daily work" },
+      { label: "Daily Purchases", to: "/payments", icon: <PaymentsIcon />, section: "Daily work" },
+      { label: "Daily Expenses", to: "/expenses", icon: <RequestQuoteIcon />, section: "Daily work" },
+      { label: "Monthly Sales & Purchases", to: "/reports/monthly", icon: <AssessmentIcon />, section: "Reports" },
       { label: "Monthly Business", to: "/reports/business", icon: <InsightsIcon />, section: "Reports" },
       { label: "Partner Wage", to: "/wages", icon: <CalculateIcon />, section: "Reports" },
       { label: "Partners", to: "/partners", adminOnly: true, icon: <PeopleIcon />, section: "Partners" },
@@ -69,8 +71,9 @@ export default function AppLayout({ children }: { children: ReactNode }) {
       { label: "Institutions", to: "/admin/institutions", adminOnly: true, icon: <ApartmentIcon />, section: "Admin" },
       { label: "Users", to: "/admin/users", adminOnly: true, icon: <BadgeIcon />, section: "Admin" },
       { label: "Roles", to: "/admin/roles", adminOnly: true, icon: <AdminPanelSettingsIcon />, section: "Admin" },
-      { label: "Receipt Heads", to: "/admin/receipt-heads", adminOnly: true, icon: <CategoryIcon />, section: "Admin" },
-      { label: "Payment Heads", to: "/admin/payment-heads", adminOnly: true, icon: <CategoryIcon />, section: "Admin" },
+      { label: "Sales Heads", to: "/admin/receipt-heads", adminOnly: true, icon: <CategoryIcon />, section: "Admin" },
+      { label: "Purchase Heads", to: "/admin/payment-heads", adminOnly: true, icon: <CategoryIcon />, section: "Admin" },
+      { label: "Expense Heads", to: "/admin/expense-heads", adminOnly: true, icon: <CategoryIcon />, section: "Admin" },
       { label: "Profile", to: "/profile", icon: <AccountCircleIcon />, section: "Account" },
     ],
     [],

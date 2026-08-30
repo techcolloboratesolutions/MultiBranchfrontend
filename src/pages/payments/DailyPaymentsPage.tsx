@@ -74,7 +74,7 @@ function HeadColumn({
           <TableHead>
             <TableRow>
               <TableCell sx={{ fontWeight: 700 }}>Code</TableCell>
-              <TableCell sx={{ fontWeight: 700 }}>Payment Head</TableCell>
+              <TableCell sx={{ fontWeight: 700 }}>Purchase Head</TableCell>
               <TableCell sx={{ fontWeight: 700 }} align="right">
                 Amount
               </TableCell>
@@ -193,7 +193,7 @@ export default function DailyPaymentsPage() {
 
   const onSave = async () => {
     if (selectedInstitution === "all") {
-      notify("Select a specific institution to save payments.", "error");
+      notify("Select a specific institution to save purchases.", "error");
       return;
     }
     const lines = visibleRows
@@ -213,7 +213,7 @@ export default function DailyPaymentsPage() {
         business_date: businessDate,
         lines,
       });
-      notify("Payments saved.");
+      notify("Purchases saved.");
       await loadSheet();
     } catch (err) {
       notify(getErrorMessage(err), "error");
@@ -225,7 +225,7 @@ export default function DailyPaymentsPage() {
   return (
     <>
       <PageHeader
-        title="Daily Payment Entry"
+        title="Daily Purchase Entry"
         subtitle="Daily heads are shown by default. Check Monthly to include monthly heads on the same two-column screen."
       />
       <Card sx={{ mb: 2 }}>
@@ -292,7 +292,7 @@ export default function DailyPaymentsPage() {
               <Grid size={{ xs: 12, md: monthlySelected ? 6 : 12 }}>
                 <HeadColumn
                   title="Daily heads"
-                  emptyMessage="No active daily payment heads (ACTIVE = Y). Add them under Administration → Payment Heads."
+                  emptyMessage="No active daily purchase heads (ACTIVE = Y). Add them under Administration → Purchase Heads."
                   rows={dailyRows}
                   amounts={amounts}
                   setAmounts={setAmounts}
@@ -304,7 +304,7 @@ export default function DailyPaymentsPage() {
               <Grid size={{ xs: 12, md: dailySelected ? 6 : 12 }}>
                 <HeadColumn
                   title="Monthly heads"
-                  emptyMessage="No active monthly payment heads. Check Monthly only shows heads marked Monthly."
+                  emptyMessage="No active monthly purchase heads. Check Monthly only shows heads marked Monthly."
                   rows={monthlyRows}
                   amounts={amounts}
                   setAmounts={setAmounts}
@@ -314,7 +314,7 @@ export default function DailyPaymentsPage() {
             ) : null}
             {!dailySelected && !monthlySelected ? (
               <Grid size={{ xs: 12 }}>
-                <Typography color="text.secondary">Select Daily and/or Monthly to show payment heads.</Typography>
+                <Typography color="text.secondary">Select Daily and/or Monthly to show purchase heads.</Typography>
               </Grid>
             ) : null}
           </Grid>
@@ -322,14 +322,14 @@ export default function DailyPaymentsPage() {
       </Card>
       <ConfirmDialog
         open={Boolean(toDeactivate)}
-        title="Deactivate payment"
+        title="Deactivate purchase"
         message="This transaction will be marked inactive. It will not be deleted."
         onClose={() => setToDeactivate(null)}
         onConfirm={async () => {
           if (!toDeactivate?.payment_id) return;
           try {
             await deactivatePayment(toDeactivate.payment_id);
-            notify("Payment deactivated.");
+            notify("Purchase deactivated.");
             setToDeactivate(null);
             await loadSheet();
           } catch (err) {

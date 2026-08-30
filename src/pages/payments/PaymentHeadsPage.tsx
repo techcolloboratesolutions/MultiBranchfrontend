@@ -24,7 +24,7 @@ export default function PaymentHeadsPage() {
 
   return (
     <>
-      <PageHeader title="Payment Heads" />
+      <PageHeader title="Purchase Heads" />
       <Card sx={{ mb: 2 }}>
         <CardContent>
           <form

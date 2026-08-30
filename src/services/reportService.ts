@@ -10,9 +10,12 @@ export interface MonthlyReportRow {
   date: string;
   receipts: Record<string, string>;
   payments: Record<string, string>;
+  expenses: Record<string, string>;
   receipt: string;
   payment: string;
+  expense: string;
   business: string;
+  balance: string;
 }
 
 export interface DayByInstitutionRow {
@@ -20,21 +23,28 @@ export interface DayByInstitutionRow {
   institution_name: string;
   receipts: Record<string, string>;
   payments: Record<string, string>;
+  expenses: Record<string, string>;
   receipt: string;
   payment: string;
+  expense: string;
   business: string;
+  balance: string;
 }
 
 export interface DayByInstitutionReport {
   date: string;
   receipt_heads: ReportHead[];
   payment_heads: ReportHead[];
+  expense_heads: ReportHead[];
   rows: DayByInstitutionRow[];
   receipt_head_totals: Record<string, string>;
   payment_head_totals: Record<string, string>;
+  expense_head_totals: Record<string, string>;
   total_receipt: string;
   total_payment: string;
+  total_expense: string;
   total_business: string;
+  total_balance: string;
 }
 
 export interface MonthlyReport {
@@ -43,27 +53,41 @@ export interface MonthlyReport {
   institution_id: number | null;
   receipt_heads: ReportHead[];
   payment_heads: ReportHead[];
+  expense_heads: ReportHead[];
   rows: MonthlyReportRow[];
   receipt_head_totals: Record<string, string>;
   payment_head_totals: Record<string, string>;
+  expense_head_totals: Record<string, string>;
   total_receipt: string;
   total_payment: string;
+  total_expense: string;
   total_business: string;
+  total_balance: string;
 }
 
 export interface DashboardData {
   role: string;
   institution: { id: number; name: string };
-  today: { receipt: string; payment: string; business: string };
-  month: { receipt: string; payment: string; business: string };
-  daily_series: Array<{ date: string; label?: string; receipt: number; payment: number; business: number }>;
+  today: { receipt: string; payment: string; expense: string; business: string; balance: string };
+  month: { receipt: string; payment: string; expense: string; business: string; balance: string };
+  daily_series: Array<{
+    date: string;
+    label?: string;
+    receipt: number;
+    payment: number;
+    expense: number;
+    business: number;
+    balance: number;
+  }>;
   monthly_series?: Array<{
     label: string;
     year: number;
     month: number;
     receipt: number;
     payment: number;
+    expense: number;
     business: number;
+    balance: number;
   }>;
   institutions_total?: number;
   institutions_active?: number;
@@ -74,6 +98,8 @@ export interface DashboardData {
     business: number;
     receipt: number;
     payment: number;
+    expense: number;
+    balance: number;
   }>;
   institution_today?: Array<{
     id?: number;
@@ -81,6 +107,8 @@ export interface DashboardData {
     business: number;
     receipt: number;
     payment: number;
+    expense: number;
+    balance: number;
   }>;
 }
 

@@ -99,7 +99,7 @@ export default function LoginPage() {
               <AccountBalanceIcon />
             </Box>
             <Box>
-              <Typography variant="h5">MultiBranches</Typography>
+              <Typography variant="h5">BJF Bay</Typography>
               <Typography color="text.secondary" variant="body2">
                 Sign in to your branch workspace
               </Typography>
