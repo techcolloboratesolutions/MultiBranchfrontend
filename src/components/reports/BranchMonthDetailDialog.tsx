@@ -31,7 +31,7 @@ import { Partner, PartnerGroup } from "../../types/partner";
 import { formatInr } from "../../utils/currency";
 import { currentMonth, currentYear, formatDisplayDate, monthDateIsos } from "../../utils/date";
 import { safeFilePart } from "../../utils/download";
-import { buildThermalDayPdf, collectNonZeroHeads, hasNonZeroDay } from "../../utils/thermalPdf";
+import { buildThermalDayPdf, buildThermalMonthSummaryPdf, collectHeads, collectNonZeroHeads, hasNonZeroDay } from "../../utils/thermalPdf";
 import { saveFilesToBranchFolder } from "../../utils/zipFolder";
 
 const denseCell = { py: 0.2, px: 0.6, fontSize: "0.75rem", lineHeight: 1.2 };
@@ -85,6 +85,7 @@ export default function BranchMonthDetailDialog({
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const [exportingDate, setExportingDate] = useState<string | null>(null);
+  const [exportingMonthly, setExportingMonthly] = useState(false);
   const [partners, setPartners] = useState<Partner[]>([]);
   const [groups, setGroups] = useState<PartnerGroup[]>([]);
   const [whatsAppTarget, setWhatsAppTarget] = useState<{
@@ -174,6 +175,49 @@ export default function BranchMonthDetailDialog({
       notify(getErrorMessage(err), "error");
     } finally {
       setExportingDate(null);
+    }
+  };
+
+  const exportMonthlySummary = async () => {
+    if (!report) {
+      notify("Monthly totals are not loaded yet.", "info");
+      return;
+    }
+    setExportingMonthly(true);
+    try {
+      const printedBy = user?.full_name || user?.username || "Unknown";
+      const printedAt = new Date().toLocaleString("en-IN");
+      const folderName = safeFilePart(branchName);
+      const monthName = new Date(year, month - 1, 1).toLocaleDateString("en-IN", { month: "long" });
+      const filename = `${safeFilePart(monthName)}_${year}_${folderName}.pdf`;
+      const pdf = buildThermalMonthSummaryPdf({
+        institution,
+        branchName,
+        periodLabel: monthLabel,
+        sales: collectHeads(receiptHeads, report.receipt_head_totals),
+        purchases: collectHeads(paymentHeads, report.payment_head_totals),
+        expenses: collectHeads(expenseHeads, report.expense_head_totals),
+        totalSales: report.total_receipt,
+        totalPurchase: report.total_payment,
+        totalExpense: report.total_expense ?? "0",
+        business: report.total_business,
+        balance: report.total_balance ?? "0",
+        printedBy,
+        printedAt,
+      });
+      const mode = await saveFilesToBranchFolder(folderName, [{ filename, content: pdf }]);
+      notify(
+        mode === "folder"
+          ? `Saved ${filename} in folder ${folderName}.`
+          : `Downloaded ${folderName}.zip with ${filename}.`,
+      );
+    } catch (err) {
+      if (err instanceof DOMException && err.name === "AbortError") {
+        return;
+      }
+      notify(getErrorMessage(err), "error");
+    } finally {
+      setExportingMonthly(false);
     }
   };
 
@@ -357,7 +401,14 @@ export default function BranchMonthDetailDialog({
           </HorizontalScrollTable>
         ) : null}
       </DialogContent>
-      <DialogActions sx={{ px: 3, py: 2 }}>
+      <DialogActions sx={{ px: 3, py: 2, gap: 1 }}>
+        <Button
+          variant="outlined"
+          onClick={exportMonthlySummary}
+          disabled={loading || exportingMonthly || Boolean(error) || !report}
+        >
+          {exportingMonthly ? "Saving..." : "Monthly summary"}
+        </Button>
         <Button onClick={onClose} variant="contained">
           Close
         </Button>

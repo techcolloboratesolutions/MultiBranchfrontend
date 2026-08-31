@@ -168,7 +168,7 @@ export default function DailyReceiptsPage() {
                         <TextField
                           type="number"
                           size="small"
-                          inputProps={{ step: "0.01", min: "0", inputMode: "decimal" }}
+                          inputProps={{ step: "0.01", inputMode: "decimal" }}
                           value={amounts[row.receipt_head] ?? ""}
                           onChange={(event) =>
                             setAmounts((current) => ({

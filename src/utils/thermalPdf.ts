@@ -147,23 +147,47 @@ function headerLines(input: ThermalDayPdfInput): string[] {
   return lines;
 }
 
-export function buildThermalDayPdf(input: ThermalDayPdfInput): Uint8Array {
-  const body: string[] = [
-    ...headerLines(input),
-    ...sectionLines("SALES HEADS", input.sales, "Total Sales", input.totalSales),
-    ...sectionLines("PURCHASE HEADS", input.purchases, "Total Purchase", input.totalPurchase),
-    ...sectionLines("EXPENSE HEADS", input.expenses, "Total Expense", input.totalExpense),
-    "",
-    "-".repeat(36),
-  ];
-  const business = amountText(input.business);
-  const balance = amountText(input.balance);
-  body.push(`Business${" ".repeat(Math.max(1, 36 - 8 - business.length))}${business}`);
-  body.push(`Balance${" ".repeat(Math.max(1, 36 - 7 - balance.length))}${balance}`);
-  body.push("=".repeat(36));
-  body.push(`Printed by: ${input.printedBy}`);
-  body.push(`Printed: ${input.printedAt}`);
+function monthHeaderLines(input: ThermalMonthSummaryInput): string[] {
+  const inst = input.institution;
+  const lines: string[] = [];
+  lines.push(inst?.main_institution_name || "MultiBranches");
+  lines.push(input.branchName);
+  if (inst?.address) {
+    lines.push(...wrapLine(inst.address, 36));
+  }
+  const place = [inst?.city, inst?.district, inst?.state].filter(Boolean).join(", ");
+  if (place) {
+    lines.push(place);
+  }
+  if (inst?.phone1 || inst?.mobile) {
+    lines.push(`Phone: ${inst.phone1 || inst.mobile}`);
+  }
+  if (inst?.email) {
+    lines.push(inst.email);
+  }
+  lines.push("=".repeat(36));
+  lines.push(...wrapLine(`Monthly Summary for ${input.periodLabel}`, 36));
+  lines.push("=".repeat(36));
+  return lines;
+}
 
+export interface ThermalMonthSummaryInput {
+  institution: Institution | null;
+  branchName: string;
+  periodLabel: string;
+  sales: ThermalHeadLine[];
+  purchases: ThermalHeadLine[];
+  expenses: ThermalHeadLine[];
+  totalSales: string;
+  totalPurchase: string;
+  totalExpense: string;
+  business: string;
+  balance: string;
+  printedBy: string;
+  printedAt: string;
+}
+
+function renderThermalPdf(body: string[]): Uint8Array {
   const pageHeight = MARGIN_PT * 2 + body.length * LINE_HEIGHT + 8;
   const content: string[] = ["BT", `/F1 ${FONT_SIZE} Tf`, `${LINE_HEIGHT} TL`];
   let y = pageHeight - MARGIN_PT - FONT_SIZE;
@@ -212,4 +236,80 @@ export function buildThermalDayPdf(input: ThermalDayPdfInput): Uint8Array {
     offset += part.length;
   }
   return out;
+}
+
+function totalsBody(
+  sales: ThermalHeadLine[],
+  purchases: ThermalHeadLine[],
+  expenses: ThermalHeadLine[],
+  totalSales: string,
+  totalPurchase: string,
+  totalExpense: string,
+  business: string,
+  balance: string,
+  printedBy: string,
+  printedAt: string,
+): string[] {
+  const body = [
+    ...sectionLines("SALES HEADS", sales, "Total Sales", totalSales),
+    ...sectionLines("PURCHASE HEADS", purchases, "Total Purchase", totalPurchase),
+    ...sectionLines("EXPENSE HEADS", expenses, "Total Expense", totalExpense),
+    "",
+    "-".repeat(36),
+  ];
+  const businessText = amountText(business);
+  const balanceText = amountText(balance);
+  body.push(`Business${" ".repeat(Math.max(1, 36 - 8 - businessText.length))}${businessText}`);
+  body.push(`Balance${" ".repeat(Math.max(1, 36 - 7 - balanceText.length))}${balanceText}`);
+  body.push("=".repeat(36));
+  body.push(`Printed by: ${printedBy}`);
+  body.push(`Printed: ${printedAt}`);
+  return body;
+}
+
+export function collectHeads(
+  heads: ReportHead[],
+  amounts: Record<string, string> | undefined,
+): ThermalHeadLine[] {
+  return heads.map((head) => ({
+    code: head.code,
+    description: head.description,
+    amount: amounts?.[String(head.id)] ?? "0",
+  }));
+}
+
+export function buildThermalDayPdf(input: ThermalDayPdfInput): Uint8Array {
+  return renderThermalPdf([
+    ...headerLines(input),
+    ...totalsBody(
+      input.sales,
+      input.purchases,
+      input.expenses,
+      input.totalSales,
+      input.totalPurchase,
+      input.totalExpense,
+      input.business,
+      input.balance,
+      input.printedBy,
+      input.printedAt,
+    ),
+  ]);
+}
+
+export function buildThermalMonthSummaryPdf(input: ThermalMonthSummaryInput): Uint8Array {
+  return renderThermalPdf([
+    ...monthHeaderLines(input),
+    ...totalsBody(
+      input.sales,
+      input.purchases,
+      input.expenses,
+      input.totalSales,
+      input.totalPurchase,
+      input.totalExpense,
+      input.business,
+      input.balance,
+      input.printedBy,
+      input.printedAt,
+    ),
+  ]);
 }
