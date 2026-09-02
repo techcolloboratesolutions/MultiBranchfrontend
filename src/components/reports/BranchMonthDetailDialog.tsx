@@ -24,7 +24,7 @@ import { useAuth } from "../../hooks/useAuth";
 import { useToast } from "../../context/ToastContext";
 import { getErrorMessage } from "../../services/api";
 import { listInstitutions } from "../../services/institutionService";
-import { listPartnerGroups, listPartners } from "../../services/partnerService";
+import { listPartnerGroups, listPartnerGroupEntries, listPartners } from "../../services/partnerService";
 import { getMonthlyReport, MonthlyReport, MonthlyReportRow } from "../../services/reportService";
 import { Institution } from "../../types/institution";
 import { Partner, PartnerGroup } from "../../types/partner";
@@ -109,12 +109,20 @@ export default function BranchMonthDetailDialog({
     listInstitutions(institutionId)
       .then((rows) => setInstitution(rows.find((row) => row.id === institutionId) ?? rows[0] ?? null))
       .catch(() => setInstitution(null));
-    listPartners()
-      .then(setPartners)
-      .catch(() => setPartners([]));
-    listPartnerGroups()
-      .then(setGroups)
-      .catch(() => setGroups([]));
+    Promise.all([
+      listPartners({ institution_id: institutionId, in_group: true }),
+      listPartnerGroups(),
+      listPartnerGroupEntries(institutionId),
+    ])
+      .then(([nextPartners, nextGroups, entries]) => {
+        setPartners(nextPartners);
+        const groupIds = new Set(entries.filter((row) => row.is_active).map((row) => row.partner_group));
+        setGroups(nextGroups.filter((group) => groupIds.has(group.id)));
+      })
+      .catch(() => {
+        setPartners([]);
+        setGroups([]);
+      });
   }, [open, institutionId, year, month]);
 
   const receiptHeads = report?.receipt_heads ?? [];
@@ -239,7 +247,7 @@ export default function BranchMonthDetailDialog({
       <DialogTitle>
         {branchName}
         <Typography variant="body2" color="text.secondary">
-          Sales, purchases, and expenses for {monthLabel} — Balance = sales + purchase − expenses
+          Sales, purchases, and expenses for {monthLabel} — Balance = sales − expenses
         </Typography>
       </DialogTitle>
       <DialogContent dividers>

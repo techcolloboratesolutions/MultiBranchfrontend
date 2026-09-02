@@ -92,6 +92,7 @@ export interface DashboardData {
   institutions_total?: number;
   institutions_active?: number;
   scope?: "all" | "institution";
+  year?: number;
   institution_series?: Array<{
     id?: number;
     name: string;
@@ -129,10 +130,20 @@ export const exportMonthlyReport = async (params: Record<string, string | number
   return response.data as Blob;
 };
 
-export const getDashboard = async (institutionId?: number | "all") => {
+export const getDashboard = async (
+  institutionId?: number | "all",
+  year?: number,
+  month?: number,
+) => {
   const params: Record<string, string | number> = {};
   if (institutionId && institutionId !== "all") {
     params.institution_id = institutionId;
+  }
+  if (year) {
+    params.year = year;
+  }
+  if (month) {
+    params.month = month;
   }
   const response = await api.get<DashboardData>("/reports/dashboard/", { params });
   return response.data;

@@ -1,8 +1,18 @@
 import api, { unwrapList } from "./api";
 import { Partner, PartnerGroup, PartnerGroupEntry } from "../types/partner";
 
-export const listPartners = async (): Promise<Partner[]> => {
-  const response = await api.get("/partners/", { params: { page_size: 200 } });
+export const listPartners = async (params?: {
+  institution_id?: number;
+  in_group?: boolean;
+}): Promise<Partner[]> => {
+  const query: Record<string, string | number> = { page_size: 200 };
+  if (params?.institution_id) {
+    query.institution_id = params.institution_id;
+  }
+  if (params?.in_group) {
+    query.in_group = "true";
+  }
+  const response = await api.get("/partners/", { params: query });
   return unwrapList<Partner>(response.data);
 };
 
@@ -48,4 +58,8 @@ export const createPartnerGroupEntry = async (payload: Partial<PartnerGroupEntry
 export const updatePartnerGroupEntry = async (id: number, payload: Partial<PartnerGroupEntry>) => {
   const response = await api.patch<PartnerGroupEntry>(`/partner-group-entries/${id}/`, payload);
   return response.data;
+};
+
+export const deletePartnerGroupEntry = async (id: number) => {
+  await api.delete(`/partner-group-entries/${id}/`);
 };

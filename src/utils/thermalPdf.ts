@@ -238,6 +238,10 @@ function renderThermalPdf(body: string[]): Uint8Array {
   return out;
 }
 
+function printFooter(printedBy: string, printedAt: string): string[] {
+  return ["=".repeat(36), `Printed by: ${printedBy}`, `Printed date: ${printedAt}`];
+}
+
 function totalsBody(
   sales: ThermalHeadLine[],
   purchases: ThermalHeadLine[],
@@ -261,9 +265,7 @@ function totalsBody(
   const balanceText = amountText(balance);
   body.push(`Business${" ".repeat(Math.max(1, 36 - 8 - businessText.length))}${businessText}`);
   body.push(`Balance${" ".repeat(Math.max(1, 36 - 7 - balanceText.length))}${balanceText}`);
-  body.push("=".repeat(36));
-  body.push(`Printed by: ${printedBy}`);
-  body.push(`Printed: ${printedAt}`);
+  body.push(...printFooter(printedBy, printedAt));
   return body;
 }
 
@@ -312,4 +314,125 @@ export function buildThermalMonthSummaryPdf(input: ThermalMonthSummaryInput): Ui
       input.printedAt,
     ),
   ]);
+}
+
+function companyPlHeader(institution: Institution | null, branchName: string, monthLabel: string): string[] {
+  const lines: string[] = [];
+  lines.push(institution?.main_institution_name || "MultiBranches");
+  lines.push(branchName);
+  if (institution?.address) {
+    lines.push(...wrapLine(institution.address, 36));
+  }
+  const place = [institution?.city, institution?.district, institution?.state].filter(Boolean).join(", ");
+  if (place) {
+    lines.push(place);
+  }
+  lines.push("");
+  lines.push(...wrapLine(`Profit and Loss for the month of ${monthLabel}`, 36));
+  lines.push("-".repeat(36));
+  return lines;
+}
+
+export interface PartnerWagePdfInput {
+  institution: Institution | null;
+  branchName: string;
+  monthLabel: string;
+  partnerName: string;
+  sharePercent: string;
+  partnerWage: string;
+  sales: ThermalHeadLine[];
+  purchases: ThermalHeadLine[];
+  expenses: ThermalHeadLine[];
+  totalSales: string;
+  totalPurchase: string;
+  totalExpense: string;
+  business: string;
+  balance: string;
+  printedBy: string;
+  printedAt: string;
+}
+
+function moneyRow(label: string, value: string): string {
+  const right = amountText(value);
+  return `${label}${" ".repeat(Math.max(1, 36 - label.length - right.length))}${right}`;
+}
+
+function shareRow(sharePercent: string): string {
+  const label = "Share %";
+  const right = `${sharePercent}%`;
+  return `${label}${" ".repeat(Math.max(1, 36 - label.length - right.length))}${right}`;
+}
+
+export function buildPartnerWagePdf(input: PartnerWagePdfInput): Uint8Array {
+  const body = [
+    ...companyPlHeader(input.institution, input.branchName, input.monthLabel),
+    ...sectionLines("SALES HEADS", input.sales, "Total Sales", input.totalSales),
+    ...sectionLines("PURCHASE HEADS", input.purchases, "Total Purchase", input.totalPurchase),
+    ...sectionLines("EXPENSE HEADS", input.expenses, "Total Expense", input.totalExpense),
+    "",
+    "-".repeat(36),
+    moneyRow("Business", input.business),
+    moneyRow("Balance", input.balance),
+    "",
+    "-".repeat(36),
+    ...wrapLine(`Partner: ${input.partnerName}`, 36),
+    shareRow(input.sharePercent),
+    moneyRow("Partner Wage", input.partnerWage),
+    ...printFooter(input.printedBy, input.printedAt),
+  ];
+  return renderThermalPdf(body);
+}
+
+export interface MonthWagesShareholder {
+  name: string;
+  sharePercent: string;
+  wage: string;
+}
+
+export interface MonthWagesSummaryPdfInput {
+  institution: Institution | null;
+  branchName: string;
+  monthLabel: string;
+  sales: ThermalHeadLine[];
+  purchases: ThermalHeadLine[];
+  expenses: ThermalHeadLine[];
+  totalSales: string;
+  totalPurchase: string;
+  totalExpense: string;
+  business: string;
+  balance: string;
+  shareholders: MonthWagesShareholder[];
+  shareTotal?: string;
+  printedBy: string;
+  printedAt: string;
+}
+
+export function buildMonthWagesSummaryPdf(input: MonthWagesSummaryPdfInput): Uint8Array {
+  const wageTotal = input.shareholders.reduce((sum, row) => sum + Number(row.wage || 0), 0);
+  const shareholderLines: string[] = ["", "-".repeat(36), "SHAREHOLDERS", "-".repeat(36)];
+  for (const row of input.shareholders) {
+    shareholderLines.push(...wrapLine(row.name, 36));
+    shareholderLines.push(shareRow(row.sharePercent));
+    shareholderLines.push(moneyRow("Partner Wage", row.wage));
+    shareholderLines.push("-".repeat(36));
+  }
+  if (input.shareTotal) {
+    const label = "Share total";
+    const right = `${input.shareTotal}%`;
+    shareholderLines.push(`${label}${" ".repeat(Math.max(1, 36 - label.length - right.length))}${right}`);
+  }
+  shareholderLines.push(moneyRow("Total Wages", String(wageTotal.toFixed(2))));
+  const body = [
+    ...companyPlHeader(input.institution, input.branchName, input.monthLabel),
+    ...sectionLines("SALES HEADS", input.sales, "Total Sales", input.totalSales),
+    ...sectionLines("PURCHASE HEADS", input.purchases, "Total Purchase", input.totalPurchase),
+    ...sectionLines("EXPENSE HEADS", input.expenses, "Total Expense", input.totalExpense),
+    "",
+    "-".repeat(36),
+    moneyRow("Business", input.business),
+    moneyRow("Balance", input.balance),
+    ...shareholderLines,
+    ...printFooter(input.printedBy, input.printedAt),
+  ];
+  return renderThermalPdf(body);
 }

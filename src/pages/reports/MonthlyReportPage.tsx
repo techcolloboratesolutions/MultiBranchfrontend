@@ -78,8 +78,8 @@ export default function MonthlyReportPage() {
         title="Monthly Sales, Purchases & Expenses"
         subtitle={
           isAdmin
-            ? "Click a date row to see every branch’s sales, purchases, and expenses for that day. Balance = sales + purchase − expenses."
-            : "All active heads are shown together. Balance = sales + purchase − expenses. The last row is the month sum for each head."
+            ? "Click a date row to see every branch’s sales, purchases, and expenses for that day. Balance = sales − expenses."
+            : "All active heads are shown together. Balance = sales − expenses. The last row is the month sum for each head."
         }
       />
       <Card sx={{ mb: 2 }}>

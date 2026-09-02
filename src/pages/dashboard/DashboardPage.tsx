@@ -36,6 +36,7 @@ import PageHeader from "../../components/common/PageHeader";
 import LoadingState from "../../components/common/LoadingState";
 import ResponsiveTable from "../../components/tables/ResponsiveTable";
 import BranchMonthDetailDialog from "../../components/reports/BranchMonthDetailDialog";
+import BranchMonthHeadsDialog from "../../components/reports/BranchMonthHeadsDialog";
 import { useAuth } from "../../hooks/useAuth";
 import { getDashboard, DashboardData } from "../../services/reportService";
 import { listInstitutions } from "../../services/institutionService";
@@ -44,6 +45,20 @@ import { formatInr } from "../../utils/currency";
 import { currentMonth, currentYear } from "../../utils/date";
 import { getErrorMessage } from "../../services/api";
 
+const MONTH_LABELS = [
+  "January",
+  "February",
+  "March",
+  "April",
+  "May",
+  "June",
+  "July",
+  "August",
+  "September",
+  "October",
+  "November",
+  "December",
+];
 const RECEIPT_COLOR = "#0f766e";
 const PAYMENT_COLOR = "#c2410c";
 const EXPENSE_COLOR = "#9d174d";
@@ -56,6 +71,14 @@ export default function DashboardPage() {
   const [institutions, setInstitutions] = useState<Institution[]>([]);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(true);
+  const [year, setYear] = useState(currentYear());
+  const [month, setMonth] = useState(currentMonth());
+  const [headsMonth, setHeadsMonth] = useState<{
+    institutionId: number;
+    branchName: string;
+    year: number;
+    month: number;
+  } | null>(null);
   const [detailMonth, setDetailMonth] = useState<{
     institutionId: number;
     branchName: string;
@@ -70,21 +93,44 @@ export default function DashboardPage() {
   }, []);
 
   useEffect(() => {
-    setLoading(true);
-    getDashboard(isAdmin ? operatingInstitutionId : user?.institution.id)
-      .then(setData)
-      .catch((err) => setError(getErrorMessage(err)))
-      .finally(() => setLoading(false));
-  }, [isAdmin, operatingInstitutionId, user?.institution.id]);
+    let cancelled = false;
+    if (!data) {
+      setLoading(true);
+    }
+    getDashboard(isAdmin ? operatingInstitutionId : user?.institution.id, year, month)
+      .then((next) => {
+        if (!cancelled) {
+          setData(next);
+          setError("");
+        }
+      })
+      .catch((err) => {
+        if (!cancelled) {
+          setError(getErrorMessage(err));
+        }
+      })
+      .finally(() => {
+        if (!cancelled) {
+          setLoading(false);
+        }
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [isAdmin, operatingInstitutionId, user?.institution.id, year, month]);
 
-  if (loading) {
+  if (loading && !data) {
     return <LoadingState />;
   }
 
   const isAllBranches = isAdmin && operatingInstitutionId === "all";
+  const isCurrentMonth = year === currentYear() && month === currentMonth();
+  const monthLabel = `${MONTH_LABELS[month - 1]} ${year}`;
   const todayByBranch = data?.institution_today ?? [];
   const monthlyByBranch = data?.institution_series ?? [];
-  const chartData = isAllBranches ? todayByBranch : (data?.daily_series ?? []);
+  const chartData = isAllBranches
+    ? (isCurrentMonth ? todayByBranch : monthlyByBranch)
+    : (data?.daily_series ?? []);
   const chartCategory = isAllBranches ? "name" : "label";
   const todayBusiness = Number(data?.today.business ?? 0);
   const monthBusiness = Number(data?.month.business ?? 0);
@@ -97,17 +143,31 @@ export default function DashboardPage() {
     return b.month - a.month;
   });
 
+  const openBranchHeads = (institutionId: number, branchName: string) => {
+    setHeadsMonth({
+      institutionId,
+      branchName,
+      year,
+      month,
+    });
+  };
+
   return (
     <Box>
       <PageHeader
         title={isAdmin ? "Admin Dashboard" : "Manager Dashboard"}
-        subtitle={isAllBranches ? "All branches — today and this month" : data?.institution.name}
+        subtitle={
+          isAllBranches
+            ? `All branches — ${isCurrentMonth ? "today and " : ""}${monthLabel}`
+            : `${data?.institution.name ?? ""} — ${monthLabel}`
+        }
       />
       {isAdmin ? (
+        <Stack direction={{ xs: "column", sm: "row" }} spacing={2} sx={{ mb: 2, maxWidth: 720 }}>
         <TextField
           select
           label="Institution"
-          sx={{ mb: 2, maxWidth: 360, bgcolor: "white" }}
+          sx={{ bgcolor: "white", minWidth: 220 }}
           value={String(operatingInstitutionId)}
           onChange={(event) => setOperatingInstitutionId(event.target.value === "all" ? "all" : Number(event.target.value))}
         >
@@ -118,6 +178,33 @@ export default function DashboardPage() {
             </MenuItem>
           ))}
         </TextField>
+        <TextField
+          select
+          label="Month"
+          sx={{ bgcolor: "white", minWidth: 160 }}
+          value={month}
+          onChange={(event) => setMonth(Number(event.target.value))}
+        >
+          {MONTH_LABELS.map((label, index) => (
+            <MenuItem key={label} value={index + 1}>
+              {label}
+            </MenuItem>
+          ))}
+        </TextField>
+        <TextField
+          select
+          label="Year"
+          sx={{ bgcolor: "white", minWidth: 120 }}
+          value={year}
+          onChange={(event) => setYear(Number(event.target.value))}
+        >
+          {[currentYear(), currentYear() - 1, currentYear() - 2].map((value) => (
+            <MenuItem key={value} value={value}>
+              {value}
+            </MenuItem>
+          ))}
+        </TextField>
+        </Stack>
       ) : null}
       {error ? <Typography color="error">{error}</Typography> : null}
 
@@ -145,17 +232,17 @@ export default function DashboardPage() {
           accent={todayBalance < 0 ? "#b91c1c" : BALANCE_COLOR}
           icon={<TrendingUpIcon />}
         />
-        <Kpi title="Month Sales" value={formatInr(data?.month.receipt)} accent={RECEIPT_COLOR} icon={<AccountBalanceWalletIcon />} />
-        <Kpi title="Month Purchase" value={formatInr(data?.month.payment)} accent={PAYMENT_COLOR} icon={<PaymentsIcon />} />
-        <Kpi title="Month Expense" value={formatInr(data?.month.expense)} accent={EXPENSE_COLOR} icon={<RequestQuoteIcon />} />
+        <Kpi title={`${monthLabel} Sales`} value={formatInr(data?.month.receipt)} accent={RECEIPT_COLOR} icon={<AccountBalanceWalletIcon />} />
+        <Kpi title={`${monthLabel} Purchase`} value={formatInr(data?.month.payment)} accent={PAYMENT_COLOR} icon={<PaymentsIcon />} />
+        <Kpi title={`${monthLabel} Expense`} value={formatInr(data?.month.expense)} accent={EXPENSE_COLOR} icon={<RequestQuoteIcon />} />
         <Kpi
-          title="Month Business"
+          title={`${monthLabel} Business`}
           value={formatInr(data?.month.business)}
           accent={monthBusiness < 0 ? "#b91c1c" : BUSINESS_COLOR}
           icon={<TrendingUpIcon />}
         />
         <Kpi
-          title="Month Balance"
+          title={`${monthLabel} Balance`}
           value={formatInr(data?.month.balance)}
           accent={monthBalance < 0 ? "#b91c1c" : BALANCE_COLOR}
           icon={<TrendingUpIcon />}
@@ -163,16 +250,20 @@ export default function DashboardPage() {
       </Grid>
 
       <Grid container spacing={2}>
-        <Grid size={{ xs: 12, lg: isAdmin && !isAllBranches ? 7 : 12 }}>
+        <Grid size={{ xs: 12, lg: isAdmin ? 7 : 12 }}>
           <Card sx={{ height: "100%" }}>
             <CardContent>
               <Typography variant="h6" gutterBottom>
-                {isAllBranches ? "Today's Sales vs Purchase vs Expense by branch" : "Daily Sales vs Purchase vs Expense"}
+                {isAllBranches
+                  ? `${isCurrentMonth ? "Today's" : monthLabel} Sales vs Purchase vs Expense by branch`
+                  : `Daily Sales vs Purchase vs Expense — ${monthLabel}`}
               </Typography>
               <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
                 {isAllBranches
-                  ? "Entries posted today across every branch"
-                  : "This month — each day of the selected branch"}
+                  ? isCurrentMonth
+                    ? "Entries posted today across every branch"
+                    : `Totals for ${monthLabel} across every branch`
+                  : `Each day of ${monthLabel} for the selected branch`}
               </Typography>
               <Box sx={{ width: "100%", height: { xs: 240, sm: 300, md: 360 } }}>
               <ResponsiveContainer width="100%" height="100%">
@@ -191,7 +282,7 @@ export default function DashboardPage() {
             </CardContent>
           </Card>
         </Grid>
-        {isAdmin && !isAllBranches ? (
+        {isAdmin ? (
           <Grid size={{ xs: 12, lg: 5 }}>
             <Card sx={{ height: "100%" }}>
               <CardContent>
@@ -199,23 +290,47 @@ export default function DashboardPage() {
                   Institution-wise Business
                 </Typography>
                 <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-                  Current month business (sales + purchase) by branch
+                  {monthLabel}. Click a branch to see sales, purchase, and expense heads, then balance.
                 </Typography>
-                <Box sx={{ width: "100%", height: { xs: 280, md: 320 } }}>
-                <ResponsiveContainer width="100%" height="100%">
-                  <BarChart
-                    data={monthlyByBranch}
-                    layout="vertical"
-                    margin={{ left: 8, right: 8 }}
-                  >
-                    <CartesianGrid strokeDasharray="3 3" horizontal={false} />
-                    <XAxis type="number" tickFormatter={(value) => compactInr(Number(value))} />
-                    <YAxis type="category" dataKey="name" width={88} tick={{ fontSize: 11 }} />
-                    <Tooltip formatter={(value) => formatInr(Number(value))} />
-                    <Bar dataKey="business" fill={BUSINESS_COLOR} name="Business" radius={[0, 6, 6, 0]} />
-                  </BarChart>
-                </ResponsiveContainer>
-                </Box>
+                <ResponsiveTable
+                  rows={monthlyByBranch}
+                  rowKey={(row) => row.id ?? row.name}
+                  onRowClick={(row) => {
+                    if (typeof row.id !== "number") {
+                      return;
+                    }
+                    openBranchHeads(row.id, row.name);
+                  }}
+                  columns={[
+                    { key: "name", label: "Branch" },
+                    {
+                      key: "business",
+                      label: "Business",
+                      align: "right",
+                      render: (row) => (
+                        <Typography
+                          component="span"
+                          sx={{ fontWeight: 700, color: row.business < 0 ? "#b91c1c" : BUSINESS_COLOR }}
+                        >
+                          {formatInr(row.business)}
+                        </Typography>
+                      ),
+                    },
+                    {
+                      key: "balance",
+                      label: "Balance",
+                      align: "right",
+                      render: (row) => (
+                        <Typography
+                          component="span"
+                          sx={{ fontWeight: 700, color: (row.balance ?? 0) < 0 ? "#b91c1c" : BALANCE_COLOR }}
+                        >
+                          {formatInr(row.balance ?? 0)}
+                        </Typography>
+                      ),
+                    },
+                  ]}
+                />
               </CardContent>
             </Card>
           </Grid>
@@ -228,7 +343,7 @@ export default function DashboardPage() {
                   Monthly summary by branch
                 </Typography>
                 <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-                  Sales, purchase, expense, business, and balance for the current month. Tap a branch row for day-by-day heads.
+                  Sales, purchase, expense, business, and balance for {monthLabel}. Tap a branch row for day-by-day heads.
                 </Typography>
                 <ResponsiveTable
                   rows={[
@@ -251,8 +366,8 @@ export default function DashboardPage() {
                     setDetailMonth({
                       institutionId: row.id,
                       branchName: row.name,
-                      year: currentYear(),
-                      month: currentMonth(),
+                      year,
+                      month,
                     });
                   }}
                   columns={[
@@ -327,7 +442,7 @@ export default function DashboardPage() {
                   Monthly Business detail
                 </Typography>
                 <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-                  Business = Sales + Purchase. Balance = Business − Expense. Tap a month for that month’s sales, purchase, and expense heads.
+                  Business = Sales + Purchase. Balance = Sales − Expense. Tap a month for that month’s sales, purchase, and expense heads.
                 </Typography>
                 <TableContainer component={Paper} variant="outlined" sx={{ overflowX: "auto" }}>
                   <Table size="small">
@@ -402,6 +517,14 @@ export default function DashboardPage() {
           </Grid>
         ) : null}
       </Grid>
+      <BranchMonthHeadsDialog
+        open={Boolean(headsMonth)}
+        branchName={headsMonth?.branchName ?? ""}
+        institutionId={headsMonth?.institutionId ?? null}
+        year={headsMonth?.year}
+        month={headsMonth?.month}
+        onClose={() => setHeadsMonth(null)}
+      />
       <BranchMonthDetailDialog
         open={Boolean(detailMonth)}
         branchName={detailMonth?.branchName ?? ""}
