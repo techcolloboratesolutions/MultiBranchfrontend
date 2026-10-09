@@ -7,6 +7,8 @@ interface AuthContextValue {
   user: AuthUser | null;
   isAdmin: boolean;
   isManager: boolean;
+  isChiefManager: boolean;
+  canViewAllBranches: boolean;
   operatingInstitutionId: number | "all";
   setOperatingInstitutionId: (id: number | "all") => void;
   login: (payload: LoginRequest) => Promise<AuthUser>;
@@ -49,7 +51,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     clearSession();
   }, []);
 
-  const defaultInstitution: number | "all" = user?.role === "ADMIN" ? "all" : (user?.institution.id ?? "all");
+  const canViewAllBranches = user?.role === "ADMIN" || user?.role === "CHIEF_MANAGER";
+  const defaultInstitution: number | "all" = canViewAllBranches ? "all" : (user?.institution.id ?? "all");
   const [operatingInstitutionId, setOperatingInstitutionId] = useState<number | "all">(defaultInstitution);
 
   const value = useMemo(
@@ -57,6 +60,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       user,
       isAdmin: user?.role === "ADMIN",
       isManager: user?.role === "MANAGER",
+      isChiefManager: user?.role === "CHIEF_MANAGER",
+      canViewAllBranches: user?.role === "ADMIN" || user?.role === "CHIEF_MANAGER",
       operatingInstitutionId: user?.role === "MANAGER" ? user.institution.id : operatingInstitutionId,
       setOperatingInstitutionId,
       login,

@@ -134,7 +134,7 @@ function HeadColumn({
 }
 
 export default function DailyPaymentsPage() {
-  const { isAdmin, user, operatingInstitutionId, setOperatingInstitutionId } = useAuth();
+  const { canViewAllBranches: isAdmin, user, operatingInstitutionId, setOperatingInstitutionId } = useAuth();
   const { notify } = useToast();
   const [institutions, setInstitutions] = useState<Institution[]>([]);
   const [dailyRows, setDailyRows] = useState<PaymentEntryRow[]>([]);

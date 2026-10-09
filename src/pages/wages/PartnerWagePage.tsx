@@ -23,7 +23,7 @@ import { buildMonthWagesSummaryPdf, buildPartnerWagePdf, collectHeads } from "..
 import { sendPdfViaWhatsApp } from "../../utils/whatsappShare";
 
 export default function PartnerWagePage() {
-  const { isAdmin, user, operatingInstitutionId, setOperatingInstitutionId } = useAuth();
+  const { canViewAllBranches: isAdmin, user, operatingInstitutionId, setOperatingInstitutionId } = useAuth();
   const { notify } = useToast();
   const navigate = useNavigate();
   const [year, setYear] = useState(currentYear());

@@ -8,3 +8,11 @@ export default function AdminRoute({ children }: { children: React.ReactNode }) 
   }
   return <>{children}</>;
 }
+
+export function OrgRoute({ children }: { children: React.ReactNode }) {
+  const { canViewAllBranches } = useAuth();
+  if (!canViewAllBranches) {
+    return <Navigate to="/" replace />;
+  }
+  return <>{children}</>;
+}

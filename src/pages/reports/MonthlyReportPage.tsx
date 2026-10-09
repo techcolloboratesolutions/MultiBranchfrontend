@@ -40,7 +40,7 @@ const paymentHeaderSx = { fontWeight: 700, backgroundColor: "#f7f0e2", whiteSpac
 const expenseHeaderSx = { fontWeight: 700, backgroundColor: "#f3e8ee", whiteSpace: "nowrap" };
 
 export default function MonthlyReportPage() {
-  const { isAdmin, user, operatingInstitutionId, setOperatingInstitutionId } = useAuth();
+  const { canViewAllBranches: isAdmin, user, operatingInstitutionId, setOperatingInstitutionId } = useAuth();
   const { notify } = useToast();
   const [year, setYear] = useState(currentYear());
   const [month, setMonth] = useState(currentMonth());

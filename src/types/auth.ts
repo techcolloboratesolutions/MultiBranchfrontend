@@ -9,7 +9,7 @@ export interface AuthUser {
   full_name: string;
   email: string;
   mobile: string;
-  role: "ADMIN" | "MANAGER" | string;
+  role: "ADMIN" | "MANAGER" | "CHIEF_MANAGER" | string;
   institution: InstitutionBrief;
   main_institution: InstitutionBrief;
   status: string;

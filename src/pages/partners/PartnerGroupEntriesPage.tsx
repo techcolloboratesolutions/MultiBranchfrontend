@@ -51,7 +51,7 @@ const emptyForm: EntryForm = {
 
 export default function PartnerGroupEntriesPage() {
   const { notify } = useToast();
-  const { isAdmin, operatingInstitutionId, setOperatingInstitutionId } = useAuth();
+  const { canViewAllBranches: isAdmin, operatingInstitutionId, setOperatingInstitutionId } = useAuth();
   const [searchParams, setSearchParams] = useSearchParams();
   const [rows, setRows] = useState<PartnerGroupEntry[]>([]);
   const [groups, setGroups] = useState<PartnerGroup[]>([]);

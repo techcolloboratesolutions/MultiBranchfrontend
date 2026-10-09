@@ -20,7 +20,7 @@ import PaymentHeadsPage from "../pages/payments/PaymentHeadsPage";
 import ExpenseHeadsPage from "../pages/expenses/ExpenseHeadsPage";
 import ProfilePage from "../pages/auth/ProfilePage";
 import ProtectedRoute from "./ProtectedRoute";
-import AdminRoute from "./AdminRoute";
+import AdminRoute, { OrgRoute } from "./AdminRoute";
 
 export default function AppRoutes() {
   return (
@@ -43,25 +43,25 @@ export default function AppRoutes() {
                 <Route
                   path="/partners"
                   element={
-                    <AdminRoute>
+                    <OrgRoute>
                       <PartnersPage />
-                    </AdminRoute>
+                    </OrgRoute>
                   }
                 />
                 <Route
                   path="/partners/groups"
                   element={
-                    <AdminRoute>
+                    <OrgRoute>
                       <PartnerGroupsPage />
-                    </AdminRoute>
+                    </OrgRoute>
                   }
                 />
                 <Route
                   path="/partners/entries"
                   element={
-                    <AdminRoute>
+                    <OrgRoute>
                       <PartnerGroupEntriesPage />
-                    </AdminRoute>
+                    </OrgRoute>
                   }
                 />
                 <Route

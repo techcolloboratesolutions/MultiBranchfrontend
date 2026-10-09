@@ -66,7 +66,7 @@ const BUSINESS_COLOR = "#1d4ed8";
 const BALANCE_COLOR = "#6d28d9";
 
 export default function DashboardPage() {
-  const { user, isAdmin, operatingInstitutionId, setOperatingInstitutionId } = useAuth();
+  const { user, isAdmin, isChiefManager, canViewAllBranches, operatingInstitutionId, setOperatingInstitutionId } = useAuth();
   const [data, setData] = useState<DashboardData | null>(null);
   const [institutions, setInstitutions] = useState<Institution[]>([]);
   const [error, setError] = useState("");
@@ -97,7 +97,7 @@ export default function DashboardPage() {
     if (!data) {
       setLoading(true);
     }
-    getDashboard(isAdmin ? operatingInstitutionId : user?.institution.id, year, month)
+    getDashboard(canViewAllBranches ? operatingInstitutionId : user?.institution.id, year, month)
       .then((next) => {
         if (!cancelled) {
           setData(next);
@@ -117,13 +117,13 @@ export default function DashboardPage() {
     return () => {
       cancelled = true;
     };
-  }, [isAdmin, operatingInstitutionId, user?.institution.id, year, month]);
+  }, [canViewAllBranches, operatingInstitutionId, user?.institution.id, year, month]);
 
   if (loading && !data) {
     return <LoadingState />;
   }
 
-  const isAllBranches = isAdmin && operatingInstitutionId === "all";
+  const isAllBranches = canViewAllBranches && operatingInstitutionId === "all";
   const isCurrentMonth = year === currentYear() && month === currentMonth();
   const monthLabel = `${MONTH_LABELS[month - 1]} ${year}`;
   const todayByBranch = data?.institution_today ?? [];
@@ -155,14 +155,14 @@ export default function DashboardPage() {
   return (
     <Box>
       <PageHeader
-        title={isAdmin ? "Admin Dashboard" : "Manager Dashboard"}
+        title={isAdmin ? "Admin Dashboard" : isChiefManager ? "Chief Manager Dashboard" : "Manager Dashboard"}
         subtitle={
           isAllBranches
             ? `All branches — ${isCurrentMonth ? "today and " : ""}${monthLabel}`
             : `${data?.institution.name ?? ""} — ${monthLabel}`
         }
       />
-      {isAdmin ? (
+      {canViewAllBranches ? (
         <Stack direction={{ xs: "column", sm: "row" }} spacing={2} sx={{ mb: 2, maxWidth: 720 }}>
         <TextField
           select
@@ -209,7 +209,7 @@ export default function DashboardPage() {
       {error ? <Typography color="error">{error}</Typography> : null}
 
       <Grid container spacing={2} sx={{ mb: 3 }}>
-        {isAdmin ? (
+        {canViewAllBranches ? (
           <>
             <Kpi title="Total Institutions" value={String(data?.institutions_total ?? 0)} accent="#0f3d4c" icon={<BusinessIcon />} />
             <Kpi title="Active Institutions" value={String(data?.institutions_active ?? 0)} accent="#0f766e" icon={<StorefrontIcon />} />
@@ -250,7 +250,7 @@ export default function DashboardPage() {
       </Grid>
 
       <Grid container spacing={2}>
-        <Grid size={{ xs: 12, lg: isAdmin ? 7 : 12 }}>
+        <Grid size={{ xs: 12, lg: canViewAllBranches ? 7 : 12 }}>
           <Card sx={{ height: "100%" }}>
             <CardContent>
               <Typography variant="h6" gutterBottom>
@@ -282,7 +282,7 @@ export default function DashboardPage() {
             </CardContent>
           </Card>
         </Grid>
-        {isAdmin ? (
+        {canViewAllBranches ? (
           <Grid size={{ xs: 12, lg: 5 }}>
             <Card sx={{ height: "100%" }}>
               <CardContent>
@@ -434,7 +434,7 @@ export default function DashboardPage() {
             </Card>
           </Grid>
         ) : null}
-        {!isAdmin ? (
+        {!canViewAllBranches ? (
           <Grid size={{ xs: 12 }}>
             <Card sx={{ boxShadow: "0 10px 30px rgba(15,61,76,0.08)" }}>
               <CardContent>

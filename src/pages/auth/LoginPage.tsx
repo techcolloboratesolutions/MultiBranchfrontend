@@ -66,7 +66,7 @@ export default function LoginPage() {
     }
   };
 
-  const locked = role === "MANAGER";
+  const locked = role === "MANAGER" || role === "CHIEF_MANAGER";
 
   return (
     <Box
@@ -111,7 +111,13 @@ export default function LoginPage() {
               <TextField label="Password" type="password" autoComplete="current-password" {...register("password")} />
               <TextField label="Institution" value={institution} InputProps={{ readOnly: locked }} disabled={!institution} />
               <TextField label="Main Institution" value={mainInstitution} InputProps={{ readOnly: locked }} disabled={!mainInstitution} />
-              {role ? <Chip label={role} color="primary" sx={{ alignSelf: "flex-start", fontWeight: 700 }} /> : null}
+              {role ? (
+                <Chip
+                  label={role === "CHIEF_MANAGER" ? "Chief Manager" : role === "ADMIN" ? "Admin" : role === "MANAGER" ? "Manager" : role}
+                  color="primary"
+                  sx={{ alignSelf: "flex-start", fontWeight: 700 }}
+                />
+              ) : null}
               {error ? (
                 <Typography color="error" variant="body2">
                   {error}

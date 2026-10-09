@@ -32,7 +32,7 @@ import { formatInr } from "../../utils/currency";
 import { todayIso } from "../../utils/date";
 
 export default function DailyReceiptsPage() {
-  const { isAdmin, user, operatingInstitutionId, setOperatingInstitutionId } = useAuth();
+  const { canViewAllBranches: isAdmin, user, operatingInstitutionId, setOperatingInstitutionId } = useAuth();
   const { notify } = useToast();
   const [institutions, setInstitutions] = useState<Institution[]>([]);
   const [rows, setRows] = useState<ReceiptEntryRow[]>([]);

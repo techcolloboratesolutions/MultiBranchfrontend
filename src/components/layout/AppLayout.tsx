@@ -45,14 +45,22 @@ interface NavItem {
   to: string;
   icon: ReactNode;
   adminOnly?: boolean;
+  orgWide?: boolean;
   section?: string;
+}
+
+function roleLabel(role?: string) {
+  if (role === "CHIEF_MANAGER") return "Chief Manager";
+  if (role === "ADMIN") return "Admin";
+  if (role === "MANAGER") return "Manager";
+  return role ?? "";
 }
 
 export default function AppLayout({ children }: { children: ReactNode }) {
   const theme = useTheme();
   const isDesktop = useMediaQuery(theme.breakpoints.up("lg"));
   const [mobileOpen, setMobileOpen] = useState(false);
-  const { user, isAdmin, logout } = useAuth();
+  const { user, isAdmin, canViewAllBranches, logout } = useAuth();
   const navigate = useNavigate();
 
   const items = useMemo<NavItem[]>(
@@ -64,9 +72,9 @@ export default function AppLayout({ children }: { children: ReactNode }) {
       { label: "Monthly Sales & Purchases", to: "/reports/monthly", icon: <AssessmentIcon />, section: "Reports" },
       { label: "Monthly Business", to: "/reports/business", icon: <InsightsIcon />, section: "Reports" },
       { label: "Partner Wage", to: "/wages", icon: <CalculateIcon />, section: "Reports" },
-      { label: "Partners", to: "/partners", adminOnly: true, icon: <PeopleIcon />, section: "Partners" },
-      { label: "Partner Groups", to: "/partners/groups", adminOnly: true, icon: <GroupsIcon />, section: "Partners" },
-      { label: "Group Entries", to: "/partners/entries", adminOnly: true, icon: <HubIcon />, section: "Partners" },
+      { label: "Partners", to: "/partners", orgWide: true, icon: <PeopleIcon />, section: "Partners" },
+      { label: "Partner Groups", to: "/partners/groups", orgWide: true, icon: <GroupsIcon />, section: "Partners" },
+      { label: "Group Entries", to: "/partners/entries", orgWide: true, icon: <HubIcon />, section: "Partners" },
       { label: "Main Institutions", to: "/admin/main-institutions", adminOnly: true, icon: <AccountBalanceIcon />, section: "Admin" },
       { label: "Institutions", to: "/admin/institutions", adminOnly: true, icon: <ApartmentIcon />, section: "Admin" },
       { label: "Users", to: "/admin/users", adminOnly: true, icon: <BadgeIcon />, section: "Admin" },
@@ -79,7 +87,11 @@ export default function AppLayout({ children }: { children: ReactNode }) {
     [],
   );
 
-  const visible = items.filter((item) => !item.adminOnly || isAdmin);
+  const visible = items.filter((item) => {
+    if (item.adminOnly) return isAdmin;
+    if (item.orgWide) return canViewAllBranches;
+    return true;
+  });
   const initials = (user?.full_name || user?.username || "U")
     .split(" ")
     .map((part) => part[0])
@@ -185,14 +197,14 @@ export default function AppLayout({ children }: { children: ReactNode }) {
             label={
               <>
                 <Typography variant="body2" fontWeight={700} sx={{ display: { xs: "block", sm: "none" } }}>
-                  {user?.role}
+                  {roleLabel(user?.role)}
                 </Typography>
                 <Stack direction="row" spacing={0.75} alignItems="center" sx={{ display: { xs: "none", sm: "flex" } }}>
                   <Typography variant="body2" fontWeight={700}>
                     {user?.full_name}
                   </Typography>
                   <Typography variant="caption" color="text.secondary">
-                    {user?.role}
+                    {roleLabel(user?.role)}
                   </Typography>
                 </Stack>
               </>
