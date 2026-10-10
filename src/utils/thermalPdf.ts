@@ -5,6 +5,11 @@ const PAGE_WIDTH_PT = (80 * 72) / 25.4;
 const MARGIN_PT = (4 * 72) / 25.4;
 const FONT_SIZE = 8;
 const LINE_HEIGHT = 11;
+const BOLD_MARK = "\u0001";
+
+function boldLine(text: string): string {
+  return `${BOLD_MARK}${text}`;
+}
 
 function pdfEscape(text: string): string {
   return text.replace(/\\/g, "\\\\").replace(/\(/g, "\\(").replace(/\)/g, "\\)");
@@ -78,13 +83,21 @@ export interface ThermalDayPdfInput {
   printedAt: string;
 }
 
-function sectionLines(title: string, rows: ThermalHeadLine[], totalLabel: string, total: string): string[] {
+function sectionLines(
+  title: string,
+  rows: ThermalHeadLine[],
+  totalLabel: string,
+  total: string,
+  includeCode = true,
+  emphasize = false,
+): string[] {
   if (rows.length === 0 && !isNonZero(total)) {
     return [];
   }
-  const lines = ["", title, "-".repeat(36)];
+  const rule = "-".repeat(36);
+  const lines = ["", emphasize ? boldLine(title) : title, emphasize ? boldLine(rule) : rule];
   for (const row of rows) {
-    const left = `${row.code} ${row.description}`.trim();
+    const left = (includeCode ? `${row.code} ${row.description}` : row.description).trim();
     const right = amountText(row.amount);
     const pad = Math.max(1, 36 - left.slice(0, 22).length - right.length);
     lines.push(`${left.slice(0, 22)}${" ".repeat(pad)}${right}`);
@@ -191,7 +204,10 @@ function renderThermalPdf(body: string[]): Uint8Array {
   const pageHeight = MARGIN_PT * 2 + body.length * LINE_HEIGHT + 8;
   const content: string[] = ["BT", `/F1 ${FONT_SIZE} Tf`, `${LINE_HEIGHT} TL`];
   let y = pageHeight - MARGIN_PT - FONT_SIZE;
-  for (const line of body) {
+  for (const raw of body) {
+    const isBold = raw.startsWith(BOLD_MARK);
+    const line = isBold ? raw.slice(BOLD_MARK.length) : raw;
+    content.push(isBold ? `/F2 ${FONT_SIZE} Tf` : `/F1 ${FONT_SIZE} Tf`);
     content.push(`1 0 0 1 ${MARGIN_PT.toFixed(2)} ${y.toFixed(2)} Tm`);
     content.push(`(${pdfEscape(toWinAnsi(line))}) Tj`);
     y -= LINE_HEIGHT;
@@ -203,9 +219,10 @@ function renderThermalPdf(body: string[]): Uint8Array {
   const objects = [
     "<< /Type /Catalog /Pages 2 0 R >>",
     "<< /Type /Pages /Kids [3 0 R] /Count 1 >>",
-    `<< /Type /Page /Parent 2 0 R /MediaBox [0 0 ${PAGE_WIDTH_PT.toFixed(2)} ${pageHeight.toFixed(2)}] /Resources << /Font << /F1 4 0 R >> >> /Contents 5 0 R >>`,
+    `<< /Type /Page /Parent 2 0 R /MediaBox [0 0 ${PAGE_WIDTH_PT.toFixed(2)} ${pageHeight.toFixed(2)}] /Resources << /Font << /F1 4 0 R /F2 6 0 R >> >> /Contents 5 0 R >>`,
     "<< /Type /Font /Subtype /Type1 /BaseFont /Courier >>",
     `<< /Length ${streamBytes.length} >>\nstream\n${stream}\nendstream`,
+    "<< /Type /Font /Subtype /Type1 /BaseFont /Courier-Bold >>",
   ];
 
   const encoder = new TextEncoder();
@@ -242,6 +259,11 @@ function printFooter(printedBy: string, printedAt: string): string[] {
   return ["=".repeat(36), `Printed by: ${printedBy}`, `Printed date: ${printedAt}`];
 }
 
+function moneyRow(label: string, value: string): string {
+  const right = amountText(value);
+  return `${label}${" ".repeat(Math.max(1, 36 - label.length - right.length))}${right}`;
+}
+
 function totalsBody(
   sales: ThermalHeadLine[],
   purchases: ThermalHeadLine[],
@@ -253,18 +275,23 @@ function totalsBody(
   balance: string,
   printedBy: string,
   printedAt: string,
+  profitLabel?: string,
 ): string[] {
+  const emphasize = Boolean(profitLabel);
   const body = [
-    ...sectionLines("SALES HEADS", sales, "Total Sales", totalSales),
-    ...sectionLines("PURCHASE HEADS", purchases, "Total Purchase", totalPurchase),
-    ...sectionLines("EXPENSE HEADS", expenses, "Total Expense", totalExpense),
+    ...sectionLines("SALES HEADS", sales, "Total Sales", totalSales, false, emphasize),
+    ...sectionLines("PURCHASE HEADS", purchases, "Total Purchase", totalPurchase, false, emphasize),
+    ...sectionLines("EXPENSE HEADS", expenses, "Total Expense", totalExpense, false, emphasize),
     "",
     "-".repeat(36),
+    moneyRow("Business", business),
   ];
-  const businessText = amountText(business);
-  const balanceText = amountText(balance);
-  body.push(`Business${" ".repeat(Math.max(1, 36 - 8 - businessText.length))}${businessText}`);
-  body.push(`Balance${" ".repeat(Math.max(1, 36 - 7 - balanceText.length))}${balanceText}`);
+  if (profitLabel) {
+    body.push(boldLine("-".repeat(36)));
+    body.push(boldLine(moneyRow(profitLabel, balance)));
+  } else {
+    body.push(moneyRow("Balance", balance));
+  }
   body.push(...printFooter(printedBy, printedAt));
   return body;
 }
@@ -294,6 +321,7 @@ export function buildThermalDayPdf(input: ThermalDayPdfInput): Uint8Array {
       input.balance,
       input.printedBy,
       input.printedAt,
+      "Balance",
     ),
   ]);
 }
@@ -312,6 +340,7 @@ export function buildThermalMonthSummaryPdf(input: ThermalMonthSummaryInput): Ui
       input.balance,
       input.printedBy,
       input.printedAt,
+      "Balance",
     ),
   ]);
 }
@@ -350,11 +379,6 @@ export interface PartnerWagePdfInput {
   balance: string;
   printedBy: string;
   printedAt: string;
-}
-
-function moneyRow(label: string, value: string): string {
-  const right = amountText(value);
-  return `${label}${" ".repeat(Math.max(1, 36 - label.length - right.length))}${right}`;
 }
 
 function shareRow(sharePercent: string): string {
