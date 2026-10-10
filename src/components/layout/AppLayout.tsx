@@ -6,6 +6,7 @@ import AssessmentIcon from "@mui/icons-material/Assessment";
 import BadgeIcon from "@mui/icons-material/Badge";
 import CalculateIcon from "@mui/icons-material/Calculate";
 import CategoryIcon from "@mui/icons-material/Category";
+import DateRangeIcon from "@mui/icons-material/DateRange";
 import DashboardIcon from "@mui/icons-material/Dashboard";
 import GroupsIcon from "@mui/icons-material/Groups";
 import HubIcon from "@mui/icons-material/Hub";
@@ -70,6 +71,7 @@ export default function AppLayout({ children }: { children: ReactNode }) {
       { label: "Daily Purchases", to: "/payments", icon: <PaymentsIcon />, section: "Daily work" },
       { label: "Daily Expenses", to: "/expenses", icon: <RequestQuoteIcon />, section: "Daily work" },
       { label: "Monthly Sales & Purchases", to: "/reports/monthly", icon: <AssessmentIcon />, section: "Reports" },
+      { label: "Periodic Sales & Purchase", to: "/reports/periodic", icon: <DateRangeIcon />, section: "Reports" },
       { label: "Monthly Business", to: "/reports/business", icon: <InsightsIcon />, section: "Reports" },
       { label: "Partner Wage", to: "/wages", icon: <CalculateIcon />, section: "Reports" },
       { label: "Partners", to: "/partners", orgWide: true, icon: <PeopleIcon />, section: "Partners" },

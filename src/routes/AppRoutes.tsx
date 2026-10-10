@@ -6,6 +6,7 @@ import DailyReceiptsPage from "../pages/receipts/DailyReceiptsPage";
 import DailyPaymentsPage from "../pages/payments/DailyPaymentsPage";
 import DailyExpensesPage from "../pages/expenses/DailyExpensesPage";
 import MonthlyReportPage from "../pages/reports/MonthlyReportPage";
+import PeriodicSalesPurchasePage from "../pages/reports/PeriodicSalesPurchasePage";
 import MonthlyBusinessPage from "../pages/reports/MonthlyBusinessPage";
 import PartnersPage from "../pages/partners/PartnersPage";
 import PartnerGroupsPage from "../pages/partners/PartnerGroupsPage";
@@ -37,6 +38,7 @@ export default function AppRoutes() {
                 <Route path="/payments" element={<DailyPaymentsPage />} />
                 <Route path="/expenses" element={<DailyExpensesPage />} />
                 <Route path="/reports/monthly" element={<MonthlyReportPage />} />
+                <Route path="/reports/periodic" element={<PeriodicSalesPurchasePage />} />
                 <Route path="/reports/business" element={<MonthlyBusinessPage />} />
                 <Route path="/wages" element={<PartnerWagePage />} />
                 <Route path="/profile" element={<ProfilePage />} />

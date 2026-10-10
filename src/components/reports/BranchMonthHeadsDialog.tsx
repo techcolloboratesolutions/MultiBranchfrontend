@@ -1,3 +1,4 @@
+import PictureAsPdfIcon from "@mui/icons-material/PictureAsPdf";
 import {
   Dialog,
   DialogActions,
@@ -15,10 +16,18 @@ import {
 } from "@mui/material";
 import { useEffect, useState } from "react";
 import LoadingState from "../common/LoadingState";
+import { useAuth } from "../../hooks/useAuth";
+import { useToast } from "../../context/ToastContext";
 import { getErrorMessage } from "../../services/api";
+import { listInstitutions } from "../../services/institutionService";
 import { getMonthlyReport, MonthlyReport, ReportHead } from "../../services/reportService";
+import { Institution } from "../../types/institution";
 import { formatInr, monthTotalProfit } from "../../utils/currency";
 import { currentMonth, currentYear } from "../../utils/date";
+import { safeFilePart } from "../../utils/download";
+import { buildMonthlyBusinessReportPdf } from "../../utils/monthlyBusinessPdf";
+import { collectHeads } from "../../utils/thermalPdf";
+import { saveFilesToBranchFolder } from "../../utils/zipFolder";
 
 const salesHeaderSx = { fontWeight: 700, backgroundColor: "#e8f3f5" };
 const purchaseHeaderSx = { fontWeight: 700, backgroundColor: "#f7f0e2" };
@@ -93,9 +102,12 @@ export default function BranchMonthHeadsDialog({
 }: Props) {
   const theme = useTheme();
   const fullScreen = useMediaQuery(theme.breakpoints.down("md"));
+  const { user } = useAuth();
+  const { notify } = useToast();
   const year = yearProp ?? currentYear();
   const month = monthProp ?? currentMonth();
   const [report, setReport] = useState<MonthlyReport | null>(null);
+  const [institution, setInstitution] = useState<Institution | null>(null);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const monthLabel = new Date(year, month - 1, 1).toLocaleDateString("en-IN", {
@@ -113,14 +125,57 @@ export default function BranchMonthHeadsDialog({
       .then(setReport)
       .catch((err) => setError(getErrorMessage(err)))
       .finally(() => setLoading(false));
+    listInstitutions()
+      .then((rows) => setInstitution(rows.find((row) => row.id === institutionId) ?? null))
+      .catch(() => setInstitution(null));
   }, [open, institutionId, year, month]);
+
+  const savePdf = async () => {
+    if (!report) {
+      return;
+    }
+    const printedBy = user?.full_name || user?.username || "Unknown";
+    const printedAt = new Date().toLocaleString("en-IN");
+    const institutionName = institution?.name || branchName || "Institution";
+    const pdf = buildMonthlyBusinessReportPdf({
+      institution,
+      branchName: institutionName,
+      periodLabel: monthLabel,
+      sales: collectHeads(report.receipt_heads, report.receipt_head_totals),
+      purchases: collectHeads(report.payment_heads, report.payment_head_totals),
+      expenses: collectHeads(report.expense_heads, report.expense_head_totals),
+      totalSales: report.total_receipt,
+      totalPurchase: report.total_payment,
+      totalExpense: report.total_expense ?? "0",
+      business: report.total_business,
+      balance: String(monthTotalProfit(report.total_business, report.total_payment, report.total_expense)),
+      profit: String(monthTotalProfit(report.total_business, report.total_payment, report.total_expense)),
+      printedBy,
+      printedAt,
+    });
+    const folderName = safeFilePart(institutionName);
+    const filename = `${folderName}_${safeFilePart(monthLabel)}.pdf`;
+    try {
+      const mode = await saveFilesToBranchFolder(folderName, [{ filename, content: pdf }]);
+      notify(
+        mode === "folder"
+          ? `Saved ${filename} in folder ${folderName}.`
+          : `Downloaded ${folderName}.zip with ${filename}.`,
+      );
+    } catch (err) {
+      if (err instanceof DOMException && err.name === "AbortError") {
+        return;
+      }
+      notify(getErrorMessage(err), "error");
+    }
+  };
 
   return (
     <Dialog open={open} onClose={onClose} fullWidth maxWidth="sm" fullScreen={fullScreen}>
       <DialogTitle>
         {branchName}
         <Typography variant="body2" color="text.secondary">
-          Sales, purchase, and expense heads for {monthLabel}. Monthly sum balance = total business − total purchase − total expense.
+          Sales, purchase, and expense heads for {monthLabel}. Profit = total business − total purchase − total expense.
         </Typography>
       </DialogTitle>
       <DialogContent dividers>
@@ -160,7 +215,7 @@ export default function BranchMonthHeadsDialog({
                 </TableCell>
               </TableRow>
               <TableRow>
-                <TableCell sx={{ fontWeight: 700, backgroundColor: "#f5f3ff" }}>Monthly sum</TableCell>
+                <TableCell sx={{ fontWeight: 700, backgroundColor: "#f5f3ff" }}>Profit</TableCell>
                 <TableCell
                   align="right"
                   sx={{
@@ -180,6 +235,9 @@ export default function BranchMonthHeadsDialog({
         ) : null}
       </DialogContent>
       <DialogActions sx={{ px: 3, py: 2 }}>
+        <Button onClick={savePdf} variant="outlined" startIcon={<PictureAsPdfIcon />} disabled={!report || loading}>
+          PDF
+        </Button>
         <Button onClick={onClose} variant="contained">
           Close
         </Button>
