@@ -264,6 +264,14 @@ function moneyRow(label: string, value: string): string {
   return `${label}${" ".repeat(Math.max(1, 36 - label.length - right.length))}${right}`;
 }
 
+function moneyLines(label: string, value: string): string[] {
+  const right = amountText(value);
+  if (label.length + 1 + right.length <= 36) {
+    return [moneyRow(label, value)];
+  }
+  return [label, `${" ".repeat(Math.max(0, 36 - right.length))}${right}`];
+}
+
 function totalsBody(
   sales: ThermalHeadLine[],
   purchases: ThermalHeadLine[],
@@ -288,7 +296,9 @@ function totalsBody(
   ];
   if (profitLabel) {
     body.push(boldLine("-".repeat(36)));
-    body.push(boldLine(moneyRow(profitLabel, balance)));
+    for (const line of moneyLines(profitLabel, balance)) {
+      body.push(boldLine(line));
+    }
   } else {
     body.push(moneyRow("Balance", balance));
   }
@@ -340,7 +350,7 @@ export function buildThermalMonthSummaryPdf(input: ThermalMonthSummaryInput): Ui
       input.balance,
       input.printedBy,
       input.printedAt,
-      "Balance",
+      "Profit for the month",
     ),
   ]);
 }

@@ -120,7 +120,7 @@ export default function BranchMonthHeadsDialog({
       <DialogTitle>
         {branchName}
         <Typography variant="body2" color="text.secondary">
-          Sales, purchase, and expense heads for {monthLabel}. Balance = sales − expenses.
+          Sales, purchase, and expense heads for {monthLabel}. Balance = sales − purchases − expenses.
         </Typography>
       </DialogTitle>
       <DialogContent dividers>

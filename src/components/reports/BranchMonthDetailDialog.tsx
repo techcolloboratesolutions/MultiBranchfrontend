@@ -247,7 +247,7 @@ export default function BranchMonthDetailDialog({
       <DialogTitle>
         {branchName}
         <Typography variant="body2" color="text.secondary">
-          Sales, purchases, and expenses for {monthLabel} — Balance = sales − expenses
+          Sales, purchases, and expenses for {monthLabel} — Balance = sales − purchases − expenses
         </Typography>
       </DialogTitle>
       <DialogContent dividers>

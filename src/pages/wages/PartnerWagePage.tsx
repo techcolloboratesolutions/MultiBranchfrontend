@@ -243,7 +243,7 @@ export default function PartnerWagePage() {
     <>
       <PageHeader
         title="Monthly Business & Partner Wage"
-        subtitle="Shows only partners in this institution’s profit-sharing group. Partner wage is each partner’s share of Balance (sales − expense)."
+        subtitle="Shows only partners in this institution’s profit-sharing group. Partner wage is each partner’s share of Balance (sales − purchase − expense)."
       />
       <Card sx={{ mb: 2 }}>
         <CardContent>

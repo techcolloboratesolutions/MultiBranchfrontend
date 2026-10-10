@@ -442,7 +442,7 @@ export default function DashboardPage() {
                   Monthly Business detail
                 </Typography>
                 <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-                  Business = Sales + Purchase. Balance = Sales − Expense. Tap a month for that month’s sales, purchase, and expense heads.
+                  Business = Sales + Purchase. Balance = Sales − Purchase − Expense. Tap a month for that month’s sales, purchase, and expense heads.
                 </Typography>
                 <TableContainer component={Paper} variant="outlined" sx={{ overflowX: "auto" }}>
                   <Table size="small">
