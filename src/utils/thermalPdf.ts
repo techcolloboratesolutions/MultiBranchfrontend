@@ -104,7 +104,7 @@ function sectionLines(
   }
   const totalRight = amountText(total);
   const totalPad = Math.max(1, 36 - totalLabel.length - totalRight.length);
-  lines.push(`${totalLabel}${" ".repeat(totalPad)}${totalRight}`);
+  lines.push(boldLine(`${totalLabel}${" ".repeat(totalPad)}${totalRight}`));
   return lines;
 }
 

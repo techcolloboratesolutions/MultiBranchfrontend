@@ -17,7 +17,7 @@ import { useEffect, useState } from "react";
 import LoadingState from "../common/LoadingState";
 import { getErrorMessage } from "../../services/api";
 import { getMonthlyReport, MonthlyReport, ReportHead } from "../../services/reportService";
-import { formatInr } from "../../utils/currency";
+import { formatInr, monthTotalProfit } from "../../utils/currency";
 import { currentMonth, currentYear } from "../../utils/date";
 
 const salesHeaderSx = { fontWeight: 700, backgroundColor: "#e8f3f5" };
@@ -120,7 +120,7 @@ export default function BranchMonthHeadsDialog({
       <DialogTitle>
         {branchName}
         <Typography variant="body2" color="text.secondary">
-          Sales, purchase, and expense heads for {monthLabel}. Balance = sales − purchases − expenses.
+          Sales, purchase, and expense heads for {monthLabel}. Monthly sum balance = total business − total purchase − total expense.
         </Typography>
       </DialogTitle>
       <DialogContent dividers>
@@ -160,16 +160,19 @@ export default function BranchMonthHeadsDialog({
                 </TableCell>
               </TableRow>
               <TableRow>
-                <TableCell sx={{ fontWeight: 700, backgroundColor: "#f5f3ff" }}>Balance</TableCell>
+                <TableCell sx={{ fontWeight: 700, backgroundColor: "#f5f3ff" }}>Monthly sum</TableCell>
                 <TableCell
                   align="right"
                   sx={{
                     fontWeight: 700,
                     backgroundColor: "#f5f3ff",
-                    color: Number(report.total_balance) < 0 ? "#b91c1c" : "#6d28d9",
+                    color:
+                      monthTotalProfit(report.total_business, report.total_payment, report.total_expense) < 0
+                        ? "#b91c1c"
+                        : "#6d28d9",
                   }}
                 >
-                  {formatInr(report.total_balance ?? "0")}
+                  {formatInr(monthTotalProfit(report.total_business, report.total_payment, report.total_expense))}
                 </TableCell>
               </TableRow>
             </TableBody>

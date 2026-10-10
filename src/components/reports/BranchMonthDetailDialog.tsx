@@ -370,7 +370,7 @@ export default function BranchMonthDetailDialog({
                   </TableRow>
                 ))}
                 <TableRow sx={{ bgcolor: "rgba(15,76,92,0.06)" }}>
-                  <TableCell sx={{ fontWeight: 700 }}>Month total</TableCell>
+                  <TableCell sx={{ fontWeight: 700 }}>Monthly sum</TableCell>
                   {receiptHeads.map((head) => (
                     <TableCell key={`sum-r-${head.id}`} align="right" sx={{ fontWeight: 700 }}>
                       {formatInr(report?.receipt_head_totals[String(head.id)] ?? "0")}

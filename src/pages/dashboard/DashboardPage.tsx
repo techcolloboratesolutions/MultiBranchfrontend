@@ -41,7 +41,7 @@ import { useAuth } from "../../hooks/useAuth";
 import { getDashboard, DashboardData } from "../../services/reportService";
 import { listInstitutions } from "../../services/institutionService";
 import { Institution } from "../../types/institution";
-import { formatInr } from "../../utils/currency";
+import { formatInr, monthTotalProfit } from "../../utils/currency";
 import { currentMonth, currentYear } from "../../utils/date";
 import { getErrorMessage } from "../../services/api";
 
@@ -350,17 +350,21 @@ export default function DashboardPage() {
                     ...monthlyByBranch,
                     {
                       id: "total",
-                      name: "Total",
+                      name: "Monthly sum",
                       receipt: monthlyByBranch.reduce((sum, row) => sum + row.receipt, 0),
                       payment: monthlyByBranch.reduce((sum, row) => sum + row.payment, 0),
                       expense: monthlyByBranch.reduce((sum, row) => sum + (row.expense ?? 0), 0),
                       business: monthlyByBranch.reduce((sum, row) => sum + row.business, 0),
-                      balance: monthlyByBranch.reduce((sum, row) => sum + (row.balance ?? 0), 0),
+                      balance: monthTotalProfit(
+                        monthlyByBranch.reduce((sum, row) => sum + row.business, 0),
+                        monthlyByBranch.reduce((sum, row) => sum + row.payment, 0),
+                        monthlyByBranch.reduce((sum, row) => sum + (row.expense ?? 0), 0),
+                      ),
                     },
                   ]}
                   rowKey={(row) => row.id ?? row.name}
                   onRowClick={(row) => {
-                    if (row.name === "Total" || typeof row.id !== "number") {
+                    if (row.name === "Monthly sum" || typeof row.id !== "number") {
                       return;
                     }
                     setDetailMonth({
@@ -377,7 +381,7 @@ export default function DashboardPage() {
                       label: "Sales",
                       align: "right",
                       render: (row) => (
-                        <Typography component="span" sx={{ color: RECEIPT_COLOR, fontWeight: row.name === "Total" ? 700 : 500 }}>
+                        <Typography component="span" sx={{ color: RECEIPT_COLOR, fontWeight: row.name === "Monthly sum" ? 700 : 500 }}>
                           {formatInr(row.receipt)}
                         </Typography>
                       ),
@@ -387,7 +391,7 @@ export default function DashboardPage() {
                       label: "Purchase",
                       align: "right",
                       render: (row) => (
-                        <Typography component="span" sx={{ color: PAYMENT_COLOR, fontWeight: row.name === "Total" ? 700 : 500 }}>
+                        <Typography component="span" sx={{ color: PAYMENT_COLOR, fontWeight: row.name === "Monthly sum" ? 700 : 500 }}>
                           {formatInr(row.payment)}
                         </Typography>
                       ),
@@ -397,7 +401,7 @@ export default function DashboardPage() {
                       label: "Expense",
                       align: "right",
                       render: (row) => (
-                        <Typography component="span" sx={{ color: EXPENSE_COLOR, fontWeight: row.name === "Total" ? 700 : 500 }}>
+                        <Typography component="span" sx={{ color: EXPENSE_COLOR, fontWeight: row.name === "Monthly sum" ? 700 : 500 }}>
                           {formatInr(row.expense ?? 0)}
                         </Typography>
                       ),
