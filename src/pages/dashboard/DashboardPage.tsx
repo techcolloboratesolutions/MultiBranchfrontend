@@ -446,7 +446,7 @@ export default function DashboardPage() {
                   Monthly Business detail
                 </Typography>
                 <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-                  Business = Sales + Purchase. Balance = Sales − Purchase − Expense. Tap a month for that month’s sales, purchase, and expense heads.
+                  Business = Sales + Purchase. Balance = Business − Purchase − Expense. Tap a month for that month’s sales, purchase, and expense heads.
                 </Typography>
                 <TableContainer component={Paper} variant="outlined" sx={{ overflowX: "auto" }}>
                   <Table size="small">
@@ -507,9 +507,15 @@ export default function DashboardPage() {
                           </TableCell>
                           <TableCell
                             align="right"
-                            sx={{ fontWeight: 700, color: (row.balance ?? 0) < 0 ? "#b91c1c" : BALANCE_COLOR }}
+                            sx={{
+                              fontWeight: 700,
+                              color:
+                                monthTotalProfit(row.business, row.payment, row.expense) < 0
+                                  ? "#b91c1c"
+                                  : BALANCE_COLOR,
+                            }}
                           >
-                            {formatInr(row.balance ?? 0)}
+                            {formatInr(monthTotalProfit(row.business, row.payment, row.expense))}
                           </TableCell>
                         </TableRow>
                       ))}
@@ -568,7 +574,9 @@ function buildMonthlySeries(data: DashboardData | null) {
       payment: isCurrent ? Number(data?.month.payment ?? 0) : 0,
       expense: isCurrent ? Number(data?.month.expense ?? 0) : 0,
       business: isCurrent ? Number(data?.month.business ?? 0) : 0,
-      balance: isCurrent ? Number(data?.month.balance ?? 0) : 0,
+      balance: isCurrent
+        ? monthTotalProfit(data?.month.business, data?.month.payment, data?.month.expense)
+        : 0,
     });
   }
   return rows;
