@@ -28,7 +28,7 @@ import { listPartnerGroups, listPartnerGroupEntries, listPartners } from "../../
 import { getMonthlyReport, MonthlyReport, MonthlyReportRow } from "../../services/reportService";
 import { Institution } from "../../types/institution";
 import { Partner, PartnerGroup } from "../../types/partner";
-import { formatInr } from "../../utils/currency";
+import { formatInr, monthTotalProfit } from "../../utils/currency";
 import { currentMonth, currentYear, formatDisplayDate, monthDateIsos } from "../../utils/date";
 import { safeFilePart } from "../../utils/download";
 import { buildThermalDayPdf, buildThermalMonthSummaryPdf, collectHeads, collectNonZeroHeads, hasNonZeroDay } from "../../utils/thermalPdf";
@@ -209,7 +209,7 @@ export default function BranchMonthDetailDialog({
         totalPurchase: report.total_payment,
         totalExpense: report.total_expense ?? "0",
         business: report.total_business,
-        balance: report.total_balance ?? "0",
+        balance: String(monthTotalProfit(report.total_business, report.total_payment, report.total_expense)),
         printedBy,
         printedAt,
       });
@@ -247,7 +247,7 @@ export default function BranchMonthDetailDialog({
       <DialogTitle>
         {branchName}
         <Typography variant="body2" color="text.secondary">
-          Sales, purchases, and expenses for {monthLabel} — Balance = sales − purchases − expenses
+          Sales, purchases, and expenses for {monthLabel}. Daily balance = sales − purchases − expenses. Month total and Profit for the month = total business − total purchase − total expense.
         </Typography>
       </DialogTitle>
       <DialogContent dividers>
@@ -399,7 +399,7 @@ export default function BranchMonthDetailDialog({
                     {formatInr(report?.total_expense)}
                   </TableCell>
                   <TableCell align="right" sx={{ fontWeight: 700 }}>
-                    {formatInr(report?.total_balance)}
+                    {formatInr(monthTotalProfit(report?.total_business, report?.total_payment, report?.total_expense))}
                   </TableCell>
                   <TableCell />
                   <TableCell />

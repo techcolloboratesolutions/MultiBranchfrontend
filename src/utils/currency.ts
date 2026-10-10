@@ -9,3 +9,12 @@ export function formatInr(value: string | number | null | undefined): string {
   });
   return `₹${formatted}`;
 }
+
+export function monthTotalProfit(
+  business: string | number | null | undefined,
+  purchase: string | number | null | undefined,
+  expense: string | number | null | undefined,
+): number {
+  const value = Number(business ?? 0) - Number(purchase ?? 0) - Number(expense ?? 0);
+  return Number.isNaN(value) ? 0 : value;
+}

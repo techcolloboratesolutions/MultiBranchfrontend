@@ -23,7 +23,7 @@ import { exportMonthlyReport, getMonthlyReport, MonthlyReport } from "../../serv
 import DayBranchesDetailDialog from "../../components/reports/DayBranchesDetailDialog";
 import { getErrorMessage } from "../../services/api";
 import { Institution } from "../../types/institution";
-import { formatInr } from "../../utils/currency";
+import { formatInr, monthTotalProfit } from "../../utils/currency";
 import { currentMonth, currentYear, formatDisplayDate } from "../../utils/date";
 
 function downloadBlob(blob: Blob, filename: string) {
@@ -78,8 +78,8 @@ export default function MonthlyReportPage() {
         title="Monthly Sales, Purchases & Expenses"
         subtitle={
           isAdmin
-            ? "Click a date row to see every branch’s sales, purchases, and expenses for that day. Balance = sales − purchases − expenses."
-            : "All active heads are shown together. Balance = sales − purchases − expenses. The last row is the month sum for each head."
+            ? "Click a date row to see every branch’s sales, purchases, and expenses for that day. Daily balance = sales − purchases − expenses. The last row balance = total business − total purchase − total expense."
+            : "All active heads are shown together. Daily balance = sales − purchases − expenses. The last row balance = total business − total purchase − total expense."
         }
       />
       <Card sx={{ mb: 2 }}>
@@ -260,7 +260,7 @@ export default function MonthlyReportPage() {
                 {formatInr(report?.total_expense)}
               </TableCell>
               <TableCell align="right" sx={{ fontWeight: 700 }}>
-                {formatInr(report?.total_balance)}
+                {formatInr(monthTotalProfit(report?.total_business, report?.total_payment, report?.total_expense))}
               </TableCell>
             </TableRow>
           </TableBody>
